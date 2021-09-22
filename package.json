@@ -1,0 +1,27 @@
+{
+  "name": "watever",
+  "version": "0.1.0",
+  "main": "index.js",
+  "type": "module",
+  "license": "MIT",
+  "description": "Bundler for WebAssembly",
+  "scripts": {},
+  "author": "Gregor Mitscha-Baude",
+  "dependencies": {
+    "@webassemblyjs/ast": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-ast.tgz",
+    "@webassemblyjs/wasm-parser": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wasm-parser.tgz",
+    "@webassemblyjs/wast-parser": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wast-parser.tgz",
+    "@webassemblyjs/wast-printer": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wast-printer.tgz",
+    "binaryen": "latest",
+    "fast-base64": "^0.1.6",
+    "minimist": "^1.2.5",
+    "parse-imports": "^1.1.0",
+    "wabt": "latest"
+  },
+  "bin": {
+    "watever": "./bin/watever.js"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0-beta.2"
+  }
+}
