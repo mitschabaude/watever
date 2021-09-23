@@ -31,7 +31,7 @@ let wrapperModules = {
 };
 let untouchedImports = new Set(["js"]);
 
-async function bundleWasm({ path: wasmPath, wrap = false, imports }) {
+async function bundleWasm({ path: wasmPath, wrap = true, imports }) {
   wabt = wabt ?? (await (await import("wabt")).default());
   let absPath = path.isAbsolute(wasmPath)
     ? wasmPath
@@ -167,7 +167,6 @@ function addWrappers(ast, imports, wrapperModules) {
   }
 }
 
-let isFileImport = /^(\/|\.\/|\.\.\/)/; // file imports start with '/' or './' or '../'
 let isWasm = /\.(wasm|wat|wast)$/;
 
 // returns de-duplicated linear list of imports that can be processed in order
@@ -180,7 +179,6 @@ function enumerateModules(
 ) {
   moduleList = moduleList ?? [];
 
-  let dirPath = path.dirname(absPath);
   let isWat = absPath.endsWith(".wat") || absPath.endsWith(".wast");
   let require = createRequire(pathToFileURL(absPath));
 
@@ -293,6 +291,8 @@ function treeshakeModule(
   let functionsByName = {};
   let memories = [];
   let memoriesByName = {};
+  let tables = [];
+  let tablesByName = {};
   let identifiers = new Map(); // node -> id
 
   for (let node of fields) {
@@ -330,6 +330,16 @@ function treeshakeModule(
         identifiers.set(node, id);
         if (node.id) {
           memoriesByName[node.id.value] = node;
+        }
+        break;
+      }
+      case "Table": {
+        let i = tables.length;
+        tables.push(node);
+        let id = getNormalizedId(moduleName, "t", node, i);
+        identifiers.set(node, id);
+        if (node.name) {
+          tablesByName[node.name.value] = node;
         }
         break;
       }
@@ -390,6 +400,7 @@ function treeshakeModule(
             }
             break;
           }
+          // TODO table import
         }
       }
     }
@@ -402,6 +413,8 @@ function treeshakeModule(
     isNumberLiteral(id) ? functions[id.value] : functionsByName[id.value];
   let getMemory = (id) =>
     isNumberLiteral(id) ? memories[id.value] : memoriesByName[id.value];
+  let getTable = (id) =>
+    isNumberLiteral(id) ? tables[id.value] : tablesByName[id.value];
 
   function addGlobal(id) {
     if (!id?.value) throw Error("got undefined id in addGlobal");
@@ -448,6 +461,23 @@ function treeshakeModule(
       node.id = normalizedId("m", node);
       // if (!node.id) console.log(node);
       // console.log('adding memory', node.id.value);
+      keep.add(node);
+    },
+
+    Table({ node }) {
+      node.name = normalizedId("t", node);
+      keep.add(node);
+    },
+
+    Elem({ node }) {
+      // console.log(node);
+      node.funcs.forEach((fi, i) => {
+        let f = getFunction(fi);
+        fi = normalizedId("f", f);
+        node.funcs[i] = fi;
+        traverseFunction(fi);
+      });
+      // node.name = normalizedId("t", node);
       keep.add(node);
     },
 
@@ -498,6 +528,13 @@ function treeshakeModule(
         case "Memory": {
           let memoryNode = getMemory(descr.id);
           let id = normalizedId("m", memoryNode);
+          descr.id = id;
+          importMap[`${moduleName}_${name}`] = id;
+          break;
+        }
+        case "Table": {
+          let tableNode = getTable(descr.id);
+          let id = normalizedId("t", tableNode);
           descr.id = id;
           importMap[`${moduleName}_${name}`] = id;
           break;

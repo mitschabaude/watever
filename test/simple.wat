@@ -1,22 +1,28 @@
 (module
-  (import "js" "console.log" (func $log (param i32)))
-  (import "../src/return.wat" "get_length" (func $get_length (param i32) (result i32)))
-  (import "../src/return.wat" "return_int" (func $return_int (param i32) (result i32)))
+  (import "js" "console.log#lift" (func $log1 (param i32 i32)))
+  (import "./inner-imports.js" "log#instance,lift" (func $log (param i32 i32)))
+  (import "../src/glue.wat" "get_length" (func $get_length (param i32) (result i32)))
+  (import "../src/glue.wat" "lift_int" (func $lift_int (param i32) (result i32)))
+  (import "../src/glue.wat" "lift_string" (func $lift_string (param i32 i32) (result i32)))
 
   (export "sum" (func $sum))
+
+  (data (i32.const 0) "length:")
+  (data (i32.const 7) "sum:")
   
   (func $sum
-    (param $offset i32)
+    (param $pointer i32)
     (result i32)
 
     (local $i i32)
     (local $sum i32)
     (local $length i32)
-    (call $get_length (local.get $offset))
+    (call $get_length (local.get $pointer))
     local.set $length
 
-    local.get $length
-    call $log
+    (call $log1
+      (call $lift_string (i32.const 0) (i32.const 7))
+      (call $lift_int (local.get $length)))
 
     i32.const 0
     local.set $sum
@@ -24,7 +30,7 @@
     i32.const 0
     local.set $i
     loop
-      local.get $offset
+      local.get $pointer
       local.get $i
       i32.add
       i32.load8_u
@@ -40,11 +46,11 @@
       br_if 0
     end
 
-    local.get $sum
-    call $log
+    (call $log
+      (call $lift_string (i32.const 7) (i32.const 4))
+      (call $lift_int (local.get $sum)))
 
     local.get $sum
-    call $return_int
   )
   
 )

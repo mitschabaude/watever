@@ -5,81 +5,64 @@ let currentId = 0;
 let encoder = new TextEncoder();
 let decoder = new TextDecoder();
 
-function wrap(wasmCode, exports, imports) {
-  let id = currentId++;
+function wrap(wasmCode, exports, imports = {}) {
   if (imports.js) {
     for (let importStr in imports.js) {
-      imports.js[importStr] = (0, eval)(importStr);
+      imports.js[importStr] = (0, eval)(imports.js[importStr]);
+    }
+  }
+  let wrapper = (modules[currentId++] = { imports });
+  for (let importModule of Object.values(imports)) {
+    for (let name in importModule) {
+      let imported = importModule[name];
+      if (typeof imported === "function") {
+        let flags = name.split("#")[1]?.split(",") ?? [];
+        importModule[name] = wrapImportFunction(imported, wrapper, flags);
+      }
     }
   }
   if (typeof wasmCode === "string") wasmCode = toBytes(wasmCode);
   let instantiated = WebAssembly.instantiate(wasmCode, imports);
-  modules[id] = {
-    modulePromise: instantiated.then((i) => i.module),
-    instancePromise: instantiated.then((i) => i.instance),
-  };
+  wrapper.modulePromise = instantiated.then((i) => i.module);
+  wrapper.instancePromise = instantiated.then((i) => i.instance);
+  wrapper.instancePromise.then((i) => {
+    wrapper.instance = i;
+  });
   return Object.fromEntries(
-    exports.map((n) => [n, wrapFunction(n, modules[id])])
+    exports.map((exp) => {
+      let [actualExport, flags] = exp.split("#");
+      flags = flags?.split(",") ?? [];
+      return [actualExport, wrapFunction(exp, wrapper, flags)];
+    })
   );
 }
 
-async function reinstantiate(wrapper) {
-  let { modulePromise, instancePromise } = wrapper;
+async function getInstance(wrapper) {
+  let { modulePromise, instancePromise, imports } = wrapper;
   if (instancePromise === undefined) {
     wrapper.instancePromise = instancePromise = modulePromise.then((m) =>
-      WebAssembly.instantiate(m)
+      WebAssembly.instantiate(m, imports)
     );
+    wrapper.instancePromise.then((i) => {
+      wrapper.instance = i;
+    });
   }
   return instancePromise;
 }
 
-function wrapFunction(name, wrapper) {
-  return async function call(...args) {
-    let instance = await reinstantiate(wrapper);
-    let func = instance.exports[name];
-    let { free, memory } = instance.exports;
-    let actualArgs = args.map((arg) => lower(arg, instance));
+function wrapFunction(name, wrapper, flags) {
+  let doLift = flags.includes("lift");
+  let doLower = true; //flags.includes("lower");
 
-    // let totalBytes = 0;
-    // for (let i = 0; i < args.length; i++) {
-    //   let arg = args[i];
-    //   if (typeof arg === "number") {
-    //   } else if (typeof arg === "string") {
-    //     totalBytes += 2 * arg.length;
-    //   } else {
-    //     totalBytes += arg.byteLength;
-    //   }
-    // }
-    // let offset = alloc(totalBytes);
-    // let actualArgs = [];
-    // for (let arg of args) {
-    //   if (typeof arg === "number") {
-    //     actualArgs.push(arg);
-    //   } else if (typeof arg === "string") {
-    //     let copy = new Uint8Array(memory.buffer, offset, 2 * arg.length);
-    //     let { written } = encoder.encodeInto(arg, copy);
-    //     let length = written ?? 0;
-    //     actualArgs.push(offset, length);
-    //     offset += length;
-    //   } else {
-    //     let length = arg.byteLength;
-    //     actualArgs.push(offset, length);
-    //     let copy = new Uint8Array(memory.buffer, offset, length);
-    //     if (ArrayBuffer.isView(arg)) {
-    //       if (arg instanceof Uint8Array) {
-    //         copy.set(arg);
-    //       } else {
-    //         copy.set(new Uint8Array(arg.buffer));
-    //       }
-    //     } else {
-    //       copy.set(new Uint8Array(arg));
-    //     }
-    //     offset += length;
-    //   }
-    // }
+  return async function call(...args) {
+    let instance = await getInstance(wrapper);
+    let func = instance.exports[name];
+    if (typeof func !== "function") return func;
+    let { free, memory } = instance.exports;
+    let actualArgs = doLower ? args.map((arg) => lower(arg, instance)) : args;
     try {
       let result = func(...actualArgs);
-      return lift(result, instance);
+      return doLift ? lift(result, instance) : result;
     } catch (err) {
       console.error(err);
     } finally {
@@ -96,9 +79,38 @@ function wrapFunction(name, wrapper) {
   };
 }
 
+function wrapImportFunction(func, wrapper, flags) {
+  let doLift = flags.includes("lift");
+  let doLower = true; //flags.includes("lower");
+  let doInstance = flags.includes("instance");
+
+  return function call(...args) {
+    let { instance } = wrapper;
+    let actualArgs = doLift ? args.map((arg) => lift(arg, instance)) : args;
+    let result = doInstance
+      ? func(instance, ...actualArgs)
+      : func(...actualArgs);
+    return doLower ? lower(result, instance) : result;
+  };
+}
+
+function wrapLiftedFunction(func, instance) {
+  // both lift and lower for greatest flexibility and for lack of an annotation so far
+  return function call(...args) {
+    let actualArgs = args.map((arg) => lower(arg, instance));
+    let result = func(...actualArgs);
+    return lift(result, instance);
+  };
+}
+
+let externrefs = {};
+let refId = 0;
+
 function lower(value, instance) {
   let { alloc, memory } = instance.exports;
   switch (typeof value) {
+    case "undefined":
+      return undefined;
     case "number":
       return value;
     case "string": {
@@ -126,10 +138,13 @@ function lower(value, instance) {
         view.setInt32(0, length, true);
         return pointer;
       } else {
-        throw Error("lowering value not supported");
+        let id = refId++;
+        externrefs[id] = value;
+        return id;
       }
     }
     default:
+      console.log("error lowering", value);
       throw Error("lowering value not supported");
   }
 }
@@ -141,6 +156,7 @@ function lift(value, instance) {
     memory,
     view: new DataView(memory.buffer, value, 1024),
     offset: 0,
+    instance,
   });
 }
 
@@ -183,6 +199,19 @@ function readValue(context) {
         value[i] = readValue(context);
       }
       if (type === 6) value = Object.fromEntries(value);
+      break;
+    }
+    case 7: {
+      value = view.getInt32(offset, true);
+      value = externrefs[value];
+      offset += 4;
+      break;
+    }
+    case 8: {
+      let { table } = context.instance.exports;
+      let index = view.getInt32(offset, true);
+      offset += 4;
+      value = wrapLiftedFunction(table.get(index), context.instance);
       break;
     }
   }

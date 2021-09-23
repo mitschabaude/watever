@@ -7,8 +7,7 @@ async function embedWasm(
   { wasm, wat, exportNames, watchFiles, imports: innerImports }, // result of bundleWasm
   { path: wasmPath, wrap = false, imports: outerImports } // same options as bundleWasm
 ) {
-  console.log(exportNames);
-  console.log(outerImports);
+  // TODO: enable version which doesn't wrap module at all (just instantiates it & and creates named exports)
   let wasmBase64 = await toBase64(wasm);
 
   let nonJsImports = {};
@@ -22,14 +21,18 @@ async function embedWasm(
   if (outerImports) {
     exportNames = exportNames.filter((n) => outerImports.has(n));
   }
-  let exportString = exportNames.join(", ");
+  let exportString = exportNames.map((e) => e.split("#")[0]).join(", ");
   let jsImportStrings = "";
   let importString = "{ ";
   for (let importPath in innerImports) {
-    let importListString = innerImports[importPath].join(", ");
+    let importListString = innerImports[importPath]
+      .map((s) => s.split("#")[0])
+      .join(", ");
     let importObjString =
       "{" +
-      innerImports[importPath].map((s) => `'${s}': ${s}`).join(", ") +
+      innerImports[importPath]
+        .map((s) => `'${s}': ${s.split("#")[0]}`)
+        .join(", ") +
       "},";
     jsImportStrings += `\nimport {${importListString}} from '${importPath}';`;
     importString += `'${importPath}': ${importObjString}`;
@@ -37,7 +40,9 @@ async function embedWasm(
   for (let importPath in nonJsImports) {
     let importListString =
       "{" +
-      nonJsImports[importPath].map((s) => `'${s}': '${s}'`).join(", ") +
+      nonJsImports[importPath]
+        .map((s) => `'${s}': '${s.split("#")[0]}'`)
+        .join(", ") +
       "},";
     importString += `'${importPath}': ${importListString}`;
   }

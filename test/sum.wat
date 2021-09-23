@@ -4,23 +4,23 @@
 
   (import "../src/memory.wat" "alloc" (func $alloc (param i32) (result i32)))
 
-  (import "../src/return.wat" "get_length" (func $get_length (param i32) (result i32)))
-  (import "../src/return.wat" "return_int" (func $return_int (param i32) (result i32)))
-  (import "../src/return.wat" "return_float" (func $return_float (param f64) (result i32)))
-  (import "../src/return.wat" "return_bool" (func $return_bool (param i32) (result i32)))
-  (import "../src/return.wat" "return_bytes" (func $return_bytes (param $offset i32) (param $length i32) (result i32)))
-  (import "../src/return.wat" "return_string" (func $return_string (param $offset i32) (param $length i32) (result i32)))
-  (import "../src/return.wat" "new_array" (func $new_array (param $length i32) (result i32)))
-  (import "../src/return.wat" "new_object" (func $new_object (param $length i32) (result i32)))
-  (import "../src/return.wat" "add_entry" (func $add_entry (param $offset i32) (param $length i32)))
+  (import "../src/glue.wat" "get_length" (func $get_length (param i32) (result i32)))
+  (import "../src/glue.wat" "lift_int" (func $lift_int (param i32) (result i32)))
+  (import "../src/glue.wat" "lift_float" (func $lift_float (param f64) (result i32)))
+  (import "../src/glue.wat" "lift_bool" (func $lift_bool (param i32) (result i32)))
+  (import "../src/glue.wat" "lift_bytes" (func $lift_bytes (param i32 i32) (result i32)))
+  (import "../src/glue.wat" "lift_string" (func $lift_string (param i32 i32) (result i32)))
+  (import "../src/glue.wat" "new_array" (func $new_array (param i32) (result i32)))
+  (import "../src/glue.wat" "new_object" (func $new_object (param i32) (result i32)))
+  (import "../src/glue.wat" "add_entry" (func $add_entry (param i32 i32)))
 
   (export "sum" (func $sum))
   (export "avg" (func $avg))
-  (export "double" (func $double))
-  (export "isSumEven" (func $isSumEven))
-  (export "howIsSum" (func $howIsSum))
+  (export "double#lift" (func $double))
+  (export "isSumEven#lift" (func $isSumEven))
+  (export "howIsSum#lift" (func $howIsSum))
   ;; (export "twice" (func $twice))
-  (export "createArray" (func $createArray))
+  (export "createArray#lift" (func $createArray))
 
   (data (i32.const 0) "even")
   (data (i32.const 4) "not-even")
@@ -57,21 +57,21 @@
     call $new_array
 
     i32.const 9
-    call $return_int
+    call $lift_int
     drop
     local.get $bytes0
     i32.const 4
-    call $return_bytes
+    call $lift_bytes
     drop
     local.get $bytes1
     i32.const 4
-    call $return_bytes
+    call $lift_bytes
     drop
     i32.const 1
-    call $return_bool
+    call $lift_bool
     drop
     f64.const 3.141592
-    call $return_float
+    call $lift_float
     drop
     i32.const 1
     call $new_object
@@ -79,25 +79,26 @@
     global.get $EVEN
     global.get $EVEN_END
     call $add_entry
-    i32.const 100
-    call $return_int
+    global.get $EVEN
+    global.get $EVEN_END
+    call $lift_string
     drop
   )
 
   (func $double
-    (param $offset i32)
+    (param $pointer i32)
     (result i32)
 
     (local $i i32)
     (local $ii i32)
     (local $length i32)
-    (call $get_length (local.get $offset))
+    (call $get_length (local.get $pointer))
     local.set $length
 
     i32.const 0
     local.set $i
     loop
-      local.get $offset
+      local.get $pointer
       local.get $i
       i32.add
       local.tee $ii
@@ -117,15 +118,15 @@
       br_if 0
     end
 
-    local.get $offset
+    local.get $pointer
     local.get $length
-    call $return_bytes
+    call $lift_bytes
   )
 
   ;; (func $twice
-  ;;   (param $offset i32) (param $length i32)
+  ;;   (param $pointer i32) (param $length i32)
   ;;   (result i32)
-  ;;   (local $offset2 i32)
+  ;;   (local $pointer2 i32)
   ;;   (local $length2 i32)
     
   ;;   local.get $length
@@ -133,46 +134,46 @@
   ;;   i32.mul
   ;;   local.tee $length2
   ;;   call $alloc
-  ;;   local.set $offset2
+  ;;   local.set $pointer2
 
-  ;;   local.get $offset2
-  ;;   local.get $offset
+  ;;   local.get $pointer2
+  ;;   local.get $pointer
   ;;   local.get $length
   ;;   memory.copy
 
-  ;;   local.get $offset2
+  ;;   local.get $pointer2
   ;;   local.get $length
   ;;   i32.add
-  ;;   local.get $offset
+  ;;   local.get $pointer
   ;;   local.get $length
   ;;   memory.copy
 
-  ;;   local.get $offset2
+  ;;   local.get $pointer2
   ;;   local.get $length2
-  ;;   call $return_string
+  ;;   call $lift_string
   ;; )
 
   (func $isSumEven
-    (param $offset i32)
+    (param $pointer i32)
     (result i32)
 
-    local.get $offset
+    local.get $pointer
     call $sum
     call $read_int
     i32.const 1
     i32.and
     i32.const 1
     i32.xor
-    call $return_bool
+    call $lift_bool
   )
 
   (func $howIsSum
-    (param $offset i32)
+    (param $pointer i32)
     (result i32)
 
     (local $tmp i32)
 
-    local.get $offset
+    local.get $pointer
     call $sum
     call $read_int
     i32.const 1
@@ -182,42 +183,40 @@
     if (result i32)
       global.get $EVEN
       global.get $EVEN_END
-      call $return_string
+      call $lift_string
     else
       global.get $NOT_EVEN
       global.get $NOT_EVEN_END
-      call $return_string
+      call $lift_string
     end
     
   )
 
   (func $avg
-    (param $offset i32)
-    (result i32)
+    (param $pointer i32)
+    (result f64)
     (local $length i32)
-    (call $get_length (local.get $offset))
+    (call $get_length (local.get $pointer))
     local.set $length
 
-    local.get $offset
+    local.get $pointer
     call $sum
-    call $read_int
     f64.convert_i32_u
 
     local.get $length
     f64.convert_i32_u
 
     f64.div
-    call $return_float
   )
   
   (func $sum
-    (param $offset i32)
+    (param $pointer i32)
     (result i32)
 
     (local $i i32)
     (local $sum i32)
     (local $length i32)
-    (call $get_length (local.get $offset))
+    (call $get_length (local.get $pointer))
     local.set $length
 
     i32.const 0
@@ -226,7 +225,7 @@
     i32.const 0
     local.set $i
     loop
-      local.get $offset
+      local.get $pointer
       local.get $i
       i32.add
       i32.load8_u
@@ -243,10 +242,6 @@
     end
 
     local.get $sum
-    call $log
-
-    local.get $sum
-    call $return_int
   )
   
   (func $read_int
