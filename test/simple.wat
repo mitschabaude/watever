@@ -1,6 +1,5 @@
 (module
-  (import "js" "console.log#lift" (func $log1 (param i32 i32)))
-  (import "./inner-imports.js" "log#instance,lift" (func $log (param i32 i32)))
+  (import "js" "console.log#lift" (func $log (param i32 i32)))
   (import "../src/glue.wat" "get_length" (func $get_length (param i32) (result i32)))
   (import "../src/glue.wat" "lift_int" (func $lift_int (param i32) (result i32)))
   (import "../src/glue.wat" "lift_string" (func $lift_string (param i32 i32) (result i32)))
@@ -20,7 +19,7 @@
     (call $get_length (local.get $pointer))
     local.set $length
 
-    (call $log1
+    (call $log
       (call $lift_string (i32.const 0) (i32.const 7))
       (call $lift_int (local.get $length)))
 

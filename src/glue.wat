@@ -3,7 +3,6 @@
 ;; * simple API for returning strings, booleans, byte arrays, nested objects and arrays
 ;; added overhead: 235B gzipped, 335B plain
 (module
-
   (import "./memory.wat" "alloc" (func $alloc (param i32) (result i32)))
 
   (export "get_length" (func $get_length))

@@ -1,11 +1,7 @@
-export { log, promise };
+export { asyncFunction };
 
-function log(instance, ...args) {
-  console.log(instance, ...args);
-}
-
-async function promise(callback) {
-  console.log("HEY!");
-  await new Promise((r) => setTimeout(r, 1000));
-  return callback("WOAH!");
+async function asyncFunction() {
+  console.log("logged inside async JS");
+  await new Promise((r) => setTimeout(r, 100));
+  return "returned from async JS";
 }

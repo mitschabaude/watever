@@ -5,22 +5,25 @@ import { bundleWasm } from "../src/bundle-wasm.js";
 import fs from "fs";
 import embedWasm from "../src/embed-wasm.js";
 
-let { _: watPaths, wat, all, o, imports } = minimist(process.argv.slice(2));
+let { _: watPaths, wat, all, o, imports, s } = minimist(process.argv.slice(2));
 
-// TODO: support not wrapping in some way, but as an annotation in the module, not as a compile flag
+// TODO: support nowrap in some way, but as an annotation in the module, not as a compile flag
 // nowrap=true would currently create a wasm bundle without secretly exported alloc, free, memory
 // but free/memory would be expected by wrap-wasm
 // so need to modify embed-wasm to indicate to wrap-wasm that we don't want that extra exports
 let nowrap = false;
 
 let multiple = watPaths.length > 1;
-let options = { wat, all, o, imports, multiple, nowrap };
+let options = { wat, all, o, imports, multiple, nowrap, silent: s };
 
 for (let watPath of watPaths) {
   await processWat(watPath, options);
 }
 
-async function processWat(watPath, { wat, all, o, imports, multiple, nowrap }) {
+async function processWat(
+  watPath,
+  { wat, all, o, imports, multiple, nowrap, silent }
+) {
   imports = imports ? new Set(imports.split(",")) : undefined;
 
   let options = multiple
@@ -47,6 +50,8 @@ async function processWat(watPath, { wat, all, o, imports, multiple, nowrap }) {
       : path.resolve(dir, base);
     if (o && multiple) await ensureDir(o);
     fs.writeFileSync(out, result.js);
+    if (!silent)
+      console.log(`Wrote ${(result.js.length * 1e-3).toFixed(2)} kB to ${out}`);
   }
 }
 

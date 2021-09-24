@@ -2,9 +2,8 @@ import { sum, memory } from "./simple.wat.js";
 import { avg, double, isSumEven, howIsSum, createArray } from "./sum.wat.js";
 import { asyncCall } from "./promise.wat.js";
 
-asyncCall().then((x) => {
-  console.log("after promise", x);
-});
+let x = await asyncCall();
+console.log(x);
 
 let bytes = new Uint8Array([1, 2, 3, 4]);
 let total = await sum(bytes);
