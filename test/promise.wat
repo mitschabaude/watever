@@ -1,13 +1,11 @@
 (module
   (import "js" "console.log#lift" (func $log (param i32)))
-
   (import "./inner-imports.js" "asyncFunction#lift" (func $async_function (result i32)))
-  (import "../src/glue.wat" "get_length" (func $get_length (param i32) (result i32)))
-  (import "../src/glue.wat" "lift_extern" (func $lift_extern (param i32) (result i32)))
-  (import "../src/glue.wat" "lift_function" (func $lift_function (param i32) (result i32)))
-  (import "../src/glue.wat" "lift_string" (func $lift_string (param i32 i32) (result i32)))
-  (import "../src/promise.wat" "then_lift" (func $then_lift (param i32 i32) (result i32)))
-  ;; (import "../src/table.wat" "table" (table 1 funcref))
+
+  (import "watever/glue.wat" "get_length" (func $get_length (param i32) (result i32)))
+  (import "watever/glue.wat" "lift_string" (func $lift_string (param i32 i32) (result i32)))
+  (import "watever/promise.wat" "then_lift" (func $then_lift (param i32 i32) (result i32)))
+  ;; (import "watever/wat/table.wat" "table" (table 1 funcref))
 
   (export "table" (table 0))
   (export "asyncCall#lift" (func $async_call))
@@ -16,7 +14,6 @@
   ;; imported tables are not added to internal bookkeeping & referencing them causes an error
   ;; + have to implement importing tables in bundle-wasm
   (table 1 funcref)
-  (elem (i32.const 0) $then_handler)
 
   (data (i32.const 0) "returned from async WAT :)") ;; length 26
 
@@ -27,11 +24,12 @@
     call $then_lift
   )
 
+  (elem (i32.const 0) $then_handler)
   (func $then_handler (param $string i32) (result i32)
     ;; log the string we get to the console
     (call $lift_string (local.get $string) (call $get_length (local.get $string)))
     call $log
-
+    ;; return another string
     (call $lift_string (i32.const 0) (i32.const 26))
   )
 )

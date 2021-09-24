@@ -48,7 +48,7 @@ async function embedWasm(
   }
   importString += " }";
   let content = "";
-  content += `import {wrap} from '../src/wrap-wasm.js';`;
+  content += `import {wrap} from 'watever/wrap.js';`;
   content += jsImportStrings + "\n";
   content += `let wasm = ${JSON.stringify(wasmBase64)};\n`;
   content += `let {${exportString}} = wrap(wasm, ${JSON.stringify(

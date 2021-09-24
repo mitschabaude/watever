@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 import minimist from "minimist";
-import path from "path";
-import { bundleWasm } from "../src/bundle-wasm.js";
-import fs from "fs";
-import embedWasm from "../src/embed-wasm.js";
+import path from "node:path";
+import fs from "node:fs";
+import buildWat from "../index.js";
 
 let { _: watPaths, wat, all, o, imports, s } = minimist(process.argv.slice(2));
 
@@ -29,9 +28,7 @@ async function processWat(
   let options = multiple
     ? { path: watPath, wrap: !nowrap }
     : { path: watPath, wrap: !nowrap, imports };
-  let result = await bundleWasm(options);
-  let content = await embedWasm(result, options);
-  result.js = content;
+  let result = await buildWat(options);
 
   if (all) console.log(result);
   else if (wat) console.log(result.wat);

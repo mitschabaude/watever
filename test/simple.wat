@@ -1,8 +1,8 @@
 (module
   (import "js" "console.log#lift" (func $log (param i32 i32)))
-  (import "../src/glue.wat" "get_length" (func $get_length (param i32) (result i32)))
-  (import "../src/glue.wat" "lift_int" (func $lift_int (param i32) (result i32)))
-  (import "../src/glue.wat" "lift_string" (func $lift_string (param i32 i32) (result i32)))
+  (import "watever/glue.wat" "get_length" (func $get_length (param i32) (result i32)))
+  (import "watever/glue.wat" "lift_int" (func $lift_int (param i32) (result i32)))
+  (import "watever/glue.wat" "lift_string" (func $lift_string (param i32 i32) (result i32)))
 
   (export "sum" (func $sum))
 

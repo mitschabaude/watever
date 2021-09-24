@@ -20,8 +20,9 @@ export { bundleWasm };
 // import.meta.resolve
 let memoryPath = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  "./memory.wat"
+  "./wat/memory.wat"
 );
+// let memoryPath = "watever/memory.wat";
 let wrapperModules = {
   [memoryPath]: {
     memory: "(memory 1)",

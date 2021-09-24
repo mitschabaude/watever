@@ -5,8 +5,15 @@
   "type": "module",
   "license": "MIT",
   "description": "Bundler for WebAssembly",
-  "scripts": {},
   "author": "Gregor Mitscha-Baude",
+  "exports": {
+    ".": "./index.js",
+    "./index.js": "./index.js",
+    "./wrap": "./wrap.js",
+    "./wrap.js": "./wrap.js",
+    "./*.wat": "./wat/*.wat"
+  },
+  "scripts": {},
   "dependencies": {
     "@webassemblyjs/ast": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-ast.tgz",
     "@webassemblyjs/wasm-parser": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wasm-parser.tgz",
@@ -21,6 +28,14 @@
   "bin": {
     "watever": "./bin/watever.js"
   },
+  "files": [
+    "wat",
+    "bin",
+    "index.js",
+    "bundle.js",
+    "embed.js",
+    "wrap.js"
+  ],
   "devDependencies": {
     "eslint": "^8.0.0-beta.2"
   }
