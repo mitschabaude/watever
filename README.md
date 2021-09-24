@@ -40,7 +40,7 @@ With a single command, `watever` transpiles this to something that can be consum
 npx watever my-module.wat
 ```
 
-This creates a JS file `my-module.wat.js` which contains the inlined Wasm bytecode plus some wrapper code. It exposes WAT exports as ESM exports, so that in another module we can simply do the following:
+This creates a JS file `my-module.wat.js` which exposes WAT exports as ESM exports, so that in another module we can simply do the following:
 
 ```js
 import { myFunction } from "./my-module.wat.js";
