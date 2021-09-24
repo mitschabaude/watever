@@ -4,8 +4,18 @@
   "main": "index.js",
   "type": "module",
   "license": "MIT",
-  "description": "Bundler for WebAssembly",
-  "author": "Gregor Mitscha-Baude",
+  "description": "WebAssembly text bundler",
+  "author": "Gregor Mitscha-Baude <gregor.mitscha-baude@gmx.at>",
+  "homepage": "https://github.com/mitschabaude/watever",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mitschabaude/watever"
+  },
+  "keywords": [
+    "webassembly",
+    "bundler",
+    "build-tool"
+  ],
   "exports": {
     ".": "./index.js",
     "./index.js": "./index.js",
@@ -13,7 +23,9 @@
     "./wrap.js": "./wrap.js",
     "./*.wat": "./wat/*.wat"
   },
-  "scripts": {},
+  "scripts": {
+    "test": "./bin/watever.js test/*.wat && node test/test.js"
+  },
   "dependencies": {
     "@webassemblyjs/ast": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-ast.tgz",
     "@webassemblyjs/wasm-parser": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wasm-parser.tgz",
