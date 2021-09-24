@@ -79,3 +79,8 @@ In the future, we plan to make plugins for popular build tools like webpack, to 
 ## Features
 
 TODO
+
+## TODOs
+
+- watch mode
+- post-MVP that's missing from @webassemblyjs

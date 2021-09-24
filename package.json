@@ -19,7 +19,6 @@
     "@webassemblyjs/wasm-parser": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wasm-parser.tgz",
     "@webassemblyjs/wast-parser": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wast-parser.tgz",
     "@webassemblyjs/wast-printer": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wast-printer.tgz",
-    "binaryen": "latest",
     "fast-base64": "^0.1.6",
     "minimist": "^1.2.5",
     "parse-imports": "^1.1.0",
