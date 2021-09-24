@@ -54,7 +54,7 @@ The `.wat.js` file will look something like this:
 
 <!-- prettier-ignore -->
 ```js
-import {wrap} from 'watever/wrap.js';
+import {wrap} from "watever/wrap.js";
 let wasm = "AGFzbQEAAAABGAVgAn9/AGAAAGAB..."; // Wasm bytecode (base64-encoded)
 let {myFunction} = wrap(wasm, ["myFunction" /* exports */], { /* imports */ });
 export {myFunction};
