@@ -63,4 +63,4 @@ export {myFunction};
 
 Note that the JS glue code contained in the `wrap()` function is imported from our library rather than inlined, so its size impact when using multiple WAT modules in one project stays small (~1.5 kB minzipped).
 
-In the future, we also want to have plugins for common JS build tools (like webpack) to avoid a separate build step for WAT and enable optimizations like tree-shaking based on what functions are imported from the WAT module.
+In the future, we also want to have plugins for common JS build tools (like webpack) to avoid a separate build step for WAT and enable optimizations like tree-shaking based on what is imported from a WAT module.
