@@ -27,7 +27,7 @@ let wrapperModules = {
   [memoryPath]: {
     memory: "(memory 1)",
     alloc: "(func (param i32) (result i32))",
-    free: "(func)",
+    reset: "(func)",
   },
 };
 let untouchedImports = new Set(["js"]);

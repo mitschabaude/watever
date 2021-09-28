@@ -4,14 +4,15 @@
 ;; added overhead: 235B gzipped, 335B plain
 (module
   (import "./memory.wat" "alloc" (func $alloc (param i32) (result i32)))
-
-  (export "get_length" (func $get_length))
+  (import "./memory.wat" "get_length" (func $get_length (param i32) (result i32)))
   
   (export "lift_int" (func $lift_int))
   (export "lift_float" (func $lift_float))
   (export "lift_bool" (func $lift_bool))
   (export "lift_bytes" (func $lift_bytes))
   (export "lift_string" (func $lift_string))
+  (export "lift_raw_bytes" (func $lift_raw_bytes))
+  (export "lift_raw_string" (func $lift_raw_string))
   (export "lift_extern" (func $lift_extern))
   (export "lift_function" (func $lift_function))
   (export "new_array" (func $new_array))
@@ -27,10 +28,6 @@
   (global $OBJECT i32 (i32.const 6))
   (global $EXTERN i32 (i32.const 7))
   (global $FUNCTION i32 (i32.const 8))
-
-  (func $get_length (param $pointer i32) (result i32)
-    (i32.load (i32.sub (local.get $pointer) (i32.const 4)))
-  )
 
   (func $lift_int
     (param i32) (result i32)
@@ -50,12 +47,24 @@
     drop
   )
   (func $lift_bytes
+    (param $pointer i32) (result i32)
+    (call $store8 (global.get $BYTES))
+    (call $store32 (local.get $pointer))
+    (call $store32 (call $get_length (local.get $pointer)))
+  )
+  (func $lift_raw_bytes
     (param $offset i32) (param $length i32) (result i32)
     (call $store8 (global.get $BYTES))
     (call $store32 (local.get $offset))
     (call $store32 (local.get $length))
   )
   (func $lift_string
+    (param $pointer i32) (result i32)
+    (call $store8 (global.get $STRING))
+    (call $store32 (local.get $pointer))
+    (call $store32 (call $get_length (local.get $pointer)))
+  )
+  (func $lift_raw_string
     (param $offset i32) (param $length i32) (result i32)
     (call $store8 (global.get $STRING))
     (call $store32 (local.get $offset))
@@ -87,10 +96,10 @@
   )
 
   (func $add_entry
-    (param $offset i32) (param $length i32)
+    (param $pointer i32)
     (call $new_array (i32.const 2))
     drop
-    (call $lift_string (local.get $offset) (local.get $length))
+    (call $lift_string (local.get $pointer))
     drop
   )
 

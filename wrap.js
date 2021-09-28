@@ -1,4 +1,4 @@
-export { wrap };
+export { wrap, addLock, removeLock };
 
 let modules = {};
 let currentId = 0;
@@ -40,14 +40,14 @@ function wrap(wasmCode, exports, imports = {}) {
 async function getInstance(wrapper) {
   let { modulePromise, instancePromise, imports } = wrapper;
   if (instancePromise === undefined) {
-    wrapper.instancePromise = instancePromise = modulePromise.then((m) =>
+    wrapper.instancePromise = modulePromise.then((m) =>
       WebAssembly.instantiate(m, imports)
     );
-    wrapper.instancePromise.then((i) => {
-      wrapper.instance = i;
-    });
+    wrapper.instance = await wrapper.instancePromise;
+    return wrapper.instance;
+  } else {
+    return instancePromise;
   }
-  return instancePromise;
 }
 
 function wrapFunction(name, wrapper, flags) {
@@ -58,25 +58,28 @@ function wrapFunction(name, wrapper, flags) {
     let instance = await getInstance(wrapper);
     let func = instance.exports[name];
     if (typeof func !== "function") return func;
-    let { free, memory } = instance.exports;
-    let actualArgs = doLower ? args.map((arg) => lower(arg, instance)) : args;
+    let actualArgs = doLower ? args.map((arg) => lower(arg, wrapper)) : args;
     try {
       let result = func(...actualArgs);
-      return doLift ? lift(result, instance) : result;
-    } catch (err) {
-      console.error(err);
+      return doLift ? lift(result, wrapper) : result;
     } finally {
-      free();
-      if (memory.buffer.byteLength >= 1e7) {
-        console.warn(
-          "Cleaning up Wasm instance, memory limit of 10MB was exceeded."
-        );
-        queueMicrotask(() => {
-          wrapper.instancePromise = undefined;
-        });
-      }
+      cleanup(wrapper);
     }
   };
+}
+
+function cleanup(wrapper) {
+  let { memory, reset } = wrapper.instance.exports;
+  reset();
+  if (memory.buffer.byteLength >= 1e7) {
+    console.warn(
+      "Cleaning up Wasm instance, memory limit of 10MB was exceeded."
+    );
+    queueMicrotask(() => {
+      wrapper.instancePromise = undefined;
+      wrapper.instance = undefined;
+    });
+  }
 }
 
 function wrapImportFunction(func, wrapper, flags) {
@@ -85,39 +88,45 @@ function wrapImportFunction(func, wrapper, flags) {
   let doInstance = flags.includes("instance");
 
   return function call(...args) {
-    let { instance } = wrapper;
-    let actualArgs = doLift ? args.map((arg) => lift(arg, instance)) : args;
+    let actualArgs = doLift ? args.map((arg) => lift(arg, wrapper)) : args;
     let result = doInstance
-      ? func(instance, ...actualArgs)
+      ? func(wrapper.instance, ...actualArgs)
       : func(...actualArgs);
-    return doLower ? lower(result, instance) : result;
+    return doLower ? lower(result, wrapper) : result;
   };
 }
 
-function wrapLiftedFunction(func, instance) {
+function wrapLiftedFunction(func, wrapper) {
   // both lift and lower for greatest flexibility and for lack of an annotation so far
   return function call(...args) {
-    let actualArgs = args.map((arg) => lower(arg, instance));
-    let result = func(...actualArgs);
-    return lift(result, instance);
+    let actualArgs = args.map((arg) => lower(arg, wrapper));
+    try {
+      let result = func(...actualArgs);
+      return lift(result, wrapper);
+    } finally {
+      cleanup(wrapper);
+    }
   };
 }
 
 let externrefs = {};
 let refId = 0;
 
-function lower(value, instance) {
-  let { alloc, memory } = instance.exports;
+function lower(value, wrapper) {
+  let { alloc, memory } = wrapper.instance.exports;
   switch (typeof value) {
     case "undefined":
       return undefined;
     case "number":
       return value;
     case "string": {
-      let pointer = alloc(4 + 2 * value.length) + 4;
+      // allocate conservative estimate of string length
+      let pointer = alloc(4 * value.length);
       let copy = new Uint8Array(memory.buffer, pointer, 2 * value.length);
       let { written } = encoder.encodeInto(value, copy);
       let length = written ?? 0;
+      // replace length written by alloc to actual string length
+      // (this operation is allowed as long as the length gets smaller)
       let view = new DataView(memory.buffer, pointer - 4, 4);
       view.setInt32(0, length, true);
       return pointer;
@@ -126,7 +135,7 @@ function lower(value, instance) {
       let isTypedArray = ArrayBuffer.isView(value);
       if (isTypedArray || value instanceof ArrayBuffer) {
         let length = value.byteLength;
-        let pointer = alloc(4 + length) + 4;
+        let pointer = alloc(length);
         let uint8value = isTypedArray
           ? value instanceof Uint8Array
             ? value
@@ -134,8 +143,6 @@ function lower(value, instance) {
           : new Uint8Array(value);
         let copy = new Uint8Array(memory.buffer, pointer, length);
         copy.set(uint8value);
-        let view = new DataView(memory.buffer, pointer - 4, 4);
-        view.setInt32(0, length, true);
         return pointer;
       } else {
         let id = refId++;
@@ -149,14 +156,14 @@ function lower(value, instance) {
   }
 }
 
-function lift(value, instance) {
+function lift(value, wrapper) {
   if (value === undefined) return undefined;
-  let { memory } = instance.exports;
+  let { memory } = wrapper.instance.exports;
   return readValue({
     memory,
     view: new DataView(memory.buffer, value, 1024),
     offset: 0,
-    instance,
+    wrapper,
   });
 }
 
@@ -166,19 +173,24 @@ function readValue(context) {
   let value;
   switch (type) {
     case 0:
+      offset += 4;
       value = view.getInt32(offset, true);
       offset += 4;
       break;
     case 1:
+      offset += 4;
       value = view.getFloat64(offset, true);
       offset += 8;
       break;
     case 2:
+      offset += 4;
       value = !!view.getUint8(offset++);
       break;
     case 3:
     case 4: {
+      offset += 4;
       let pointer2 = view.getUint32(offset, true);
+      offset += 4;
       offset += 4;
       let length = view.getUint32(offset, true);
       offset += 4;
@@ -186,37 +198,58 @@ function readValue(context) {
         value = new Uint8Array(
           memory.buffer.slice(pointer2, pointer2 + length)
         );
-      else
+      else {
         value = decoder.decode(new Uint8Array(memory.buffer, pointer2, length));
+      }
       break;
     }
     case 5:
     case 6: {
+      offset += 4;
       let length = view.getUint8(offset++);
       value = new Array(length);
       context.offset = offset;
       for (let i = 0; i < length; i++) {
+        context.offset = context.offset + 4;
         value[i] = readValue(context);
       }
       if (type === 6) value = Object.fromEntries(value);
       break;
     }
     case 7: {
+      offset += 4;
       value = view.getInt32(offset, true);
       value = externrefs[value];
       offset += 4;
       break;
     }
     case 8: {
-      let { table } = context.instance.exports;
+      let { table } = context.wrapper.instance.exports;
+      offset += 4;
       let index = view.getInt32(offset, true);
       offset += 4;
-      value = wrapLiftedFunction(table.get(index), context.instance);
+      value = wrapLiftedFunction(table.get(index), context.wrapper);
       break;
     }
   }
   context.offset = offset;
   return value;
+}
+
+let locks = new Set();
+let maxLock = -1;
+function addLock(lock) {
+  locks.add(lock);
+  if (lock > maxLock) maxLock = lock;
+  return maxLock;
+}
+function removeLock(lock) {
+  locks.delete(lock);
+  if (lock === maxLock) {
+    maxLock = Math.max(...locks);
+  }
+  if (maxLock === -Infinity) maxLock = -1;
+  return maxLock;
 }
 
 function toBytes(base64) {

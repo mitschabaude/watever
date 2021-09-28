@@ -4,7 +4,15 @@ import path from "node:path";
 import fs from "node:fs";
 import buildWat from "../index.js";
 
-let { _: watPaths, wat, all, o, imports, s } = minimist(process.argv.slice(2));
+let {
+  _: watPaths,
+  wat,
+  all,
+  o,
+  imports,
+  s,
+  deno,
+} = minimist(process.argv.slice(2));
 
 // TODO: support nowrap in some way, but as an annotation in the module, not as a compile flag
 // nowrap=true would currently create a wasm bundle without secretly exported alloc, free, memory
@@ -13,7 +21,7 @@ let { _: watPaths, wat, all, o, imports, s } = minimist(process.argv.slice(2));
 let nowrap = false;
 
 let multiple = watPaths.length > 1;
-let options = { wat, all, o, imports, multiple, nowrap, silent: s };
+let options = { wat, all, o, imports, multiple, nowrap, silent: s, deno };
 
 for (let watPath of watPaths) {
   await processWat(watPath, options);
@@ -21,13 +29,13 @@ for (let watPath of watPaths) {
 
 async function processWat(
   watPath,
-  { wat, all, o, imports, multiple, nowrap, silent }
+  { wat, all, o, imports, multiple, nowrap, silent, deno }
 ) {
   imports = imports ? new Set(imports.split(",")) : undefined;
 
   let options = multiple
-    ? { path: watPath, wrap: !nowrap }
-    : { path: watPath, wrap: !nowrap, imports };
+    ? { path: watPath, wrap: !nowrap, deno }
+    : { path: watPath, wrap: !nowrap, deno, imports };
   let result = await buildWat(options);
 
   if (all) console.log(result);

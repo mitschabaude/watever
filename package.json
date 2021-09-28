@@ -48,6 +48,7 @@
     "wrap.js"
   ],
   "devDependencies": {
+    "chrode": "^0.3.2",
     "eslint": "^8.0.0-beta.2"
   }
 }

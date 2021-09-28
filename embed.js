@@ -5,7 +5,7 @@ let untouchedImports = new Set(["js"]);
 
 async function embedWasm(
   { wasm, wat, exportNames, watchFiles, imports: innerImports }, // result of bundleWasm
-  { path: wasmPath, wrap = false, imports: outerImports } // same options as bundleWasm
+  { path: wasmPath, wrap = false, imports: outerImports, deno = false } // same options as bundleWasm
 ) {
   // TODO: enable version which doesn't wrap module at all (just instantiates it & and creates named exports)
   let wasmBase64 = await toBase64(wasm);
@@ -31,20 +31,20 @@ async function embedWasm(
     let importObjString =
       "{" +
       innerImports[importPath]
-        .map((s) => `'${s}': ${s.split("#")[0]}`)
+        .map((s) => `"${s}": ${s.split("#")[0]}`)
         .join(", ") +
       "},";
-    jsImportStrings += `\nimport {${importListString}} from '${importPath}';`;
-    importString += `'${importPath}': ${importObjString}`;
+    jsImportStrings += `\nimport {${importListString}} from "${importPath}";`;
+    importString += `"${importPath}": ${importObjString}`;
   }
   for (let importPath in nonJsImports) {
     let importListString =
       "{" +
       nonJsImports[importPath]
-        .map((s) => `'${s}': '${s.split("#")[0]}'`)
+        .map((s) => `"${s}": "${s.split("#")[0]}"`)
         .join(", ") +
       "},";
-    importString += `'${importPath}': ${importListString}`;
+    importString += `"${importPath}": ${importListString}`;
   }
   importString += " }";
   let content = "";
@@ -55,6 +55,13 @@ async function embedWasm(
     exportNames
   )}, ${importString});\n`;
   content += `export {${exportString}};\n`;
+  if (deno) {
+    content = content.replace(
+      /from "watever\/wrap.js"/g,
+      // `from "../wrap.js"`
+      `from "https://raw.githubusercontent.com/mitschabaude/watever/main/wrap.js"`
+    );
+  }
   return content;
 }
 

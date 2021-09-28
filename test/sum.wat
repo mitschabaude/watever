@@ -3,16 +3,16 @@
   (import "js" "x => console.log(x)" (func $log (param i32)))
 
   (import "watever/memory.wat" "alloc" (func $alloc (param i32) (result i32)))
+  (import "watever/memory.wat" "get_length" (func $get_length (param i32) (result i32)))
 
-  (import "watever/glue.wat" "get_length" (func $get_length (param i32) (result i32)))
   (import "watever/glue.wat" "lift_int" (func $lift_int (param i32) (result i32)))
   (import "watever/glue.wat" "lift_float" (func $lift_float (param f64) (result i32)))
   (import "watever/glue.wat" "lift_bool" (func $lift_bool (param i32) (result i32)))
-  (import "watever/glue.wat" "lift_bytes" (func $lift_bytes (param i32 i32) (result i32)))
-  (import "watever/glue.wat" "lift_string" (func $lift_string (param i32 i32) (result i32)))
+  (import "watever/glue.wat" "lift_bytes" (func $lift_bytes (param i32) (result i32)))
+  (import "watever/glue.wat" "lift_string" (func $lift_string (param i32) (result i32)))
   (import "watever/glue.wat" "new_array" (func $new_array (param i32) (result i32)))
   (import "watever/glue.wat" "new_object" (func $new_object (param i32) (result i32)))
-  (import "watever/glue.wat" "add_entry" (func $add_entry (param i32 i32)))
+  (import "watever/glue.wat" "add_entry" (func $add_entry (param i32)))
 
   (export "sum" (func $sum))
   (export "avg" (func $avg))
@@ -22,12 +22,10 @@
   ;; (export "twice" (func $twice))
   (export "createArray#lift" (func $createArray))
 
-  (data (i32.const 0) "even")
-  (data (i32.const 4) "not-even")
-  (global $EVEN i32 (i32.const 0))
-  (global $EVEN_END i32 (i32.const 4))
-  (global $NOT_EVEN i32 (i32.const 4))
-  (global $NOT_EVEN_END i32 (i32.const 12))
+  (data (i32.const 0) "\04\00\00\00even")
+  (data (i32.const 8) "\08\00\00\00not-even")
+  (global $EVEN i32 (i32.const 4))
+  (global $NOT_EVEN i32 (i32.const 12))
 
   (func $createArray
     (result i32)
@@ -60,11 +58,9 @@
     call $lift_int
     drop
     local.get $bytes0
-    i32.const 4
     call $lift_bytes
     drop
     local.get $bytes1
-    i32.const 4
     call $lift_bytes
     drop
     i32.const 1
@@ -77,10 +73,8 @@
     call $new_object
     drop
     global.get $EVEN
-    global.get $EVEN_END
     call $add_entry
     global.get $EVEN
-    global.get $EVEN_END
     call $lift_string
     drop
   )
@@ -119,7 +113,6 @@
     end
 
     local.get $pointer
-    local.get $length
     call $lift_bytes
   )
 
@@ -149,7 +142,6 @@
   ;;   memory.copy
 
   ;;   local.get $pointer2
-  ;;   local.get $length2
   ;;   call $lift_string
   ;; )
 
@@ -182,11 +174,9 @@
 
     if (result i32)
       global.get $EVEN
-      global.get $EVEN_END
       call $lift_string
     else
       global.get $NOT_EVEN
-      global.get $NOT_EVEN_END
       call $lift_string
     end
     
