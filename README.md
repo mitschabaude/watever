@@ -6,7 +6,7 @@ watever is a bundler/transpiler for WebAssembly + JavaScript. We make it easy to
 npm i watever
 ```
 
-The `watever` command bundles your WAT to Wasm bytecode and generates a light-weight JS wrapper:
+The `watever` CLI bundles your WAT to Wasm bytecode and generates a light-weight JS wrapper:
 
 ```sh
 npx watever my-wat-module.wat # creates my-wat-module.wat.js
