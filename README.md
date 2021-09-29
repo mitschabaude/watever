@@ -39,7 +39,9 @@ Let's say we have a simple WAT module, which exports a function that logs a numb
 )
 ```
 
-The syntax is [spec-compliant WAT syntax](https://developer.mozilla.org/en-US/docs/WebAssembly/Understanding_the_text_format), plus conventions about how import statements are interpreted. In this example, the `(import "js" "...")` convention allows you to import arbitrary JavaScript objects with inline code.
+The syntax is [spec-compliant WAT](https://webassembly.github.io/spec/core/text/index.html) plus conventions about how import statements are interpreted. In this example, the `(import "js" ...)` convention allows you to import arbitrary JavaScript objects with inline code.
+
+> 💡 If you're not familiar with WAT syntax, we recommend going through [this MDN explainer](https://developer.mozilla.org/en-US/docs/WebAssembly/Understanding_the_text_format) before you continue.
 
 <!-- Here, we import one function from JS and one from a second WAT module. This import syntax convention lies at the core of watever. We also export a function called `myFunction`. -->
 
@@ -178,7 +180,7 @@ This time, WAT's responsibility is not to log anything but to transform a string
 )
 ```
 
-We'll focus only on the important parts here. Especially interesting is the function signature:
+We'll focus only on the important parts here. First, look at the function signature:
 
 ```wat
 (func $hello (export "hello#lift")
@@ -196,7 +198,7 @@ The procedure of transforming a JS string to a WAT number is called _lowering_. 
 
 > 💡 For lowering, we didn't need an annotation like `#lift`: it happens automatically – just pass normal JS values to your WAT functions. This is possible because lowering leaves JS `number`s and `undefined` untouched, and thus preserves the behaviour of vanilla (unwrapped) Wasm modules. Apart from that, lowering transforms `string`, `TypedArray` and `ArrayBuffer` to pointers into Wasm memory, and passes all other JS objects as an opaque `i32` that represents an external reference (more on that later). <!-- (Internally, the length is just stored in the 4 bytes preceding the pointer.) --> <!-- (This is possible because lowering doesn't change vanilla Wasm modules.)  -->
 
-Another interesting part is how we create the new string in Wasm memory:
+Another notable part is how we create the new string in Wasm memory:
 
 ```wat
   (call $alloc (local.get $greeting_length)))
@@ -236,7 +238,7 @@ console.log(greeting);
 // "Hello, mitschabaude! I see you have 19 github repositories."
 ```
 
-To achieve this, we're going to import the following JS module which can fetch the number of repositories from the Github REST API:
+To achieve this, we're going to import the following JS module, which can fetch the number of repos from Github's REST API:
 
 ```js
 // github.js
@@ -348,7 +350,7 @@ Here' the WAT in all its glory:
 )
 ```
 
-This may be too much to digest, so let's again focus on the interesting parts: The exported function `$hello_github_user` and the code preceding it. First, we create a `table` containing a single function reference (to `$create_greeting`):
+This may be too much to digest, so let's focus on the interesting parts: The exported function `$hello_github_user` and the code preceding it. First, we create a `table` containing a single function reference (to `$create_greeting`):
 
 ```wat
 (table 1 funcref)
