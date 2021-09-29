@@ -415,6 +415,12 @@ Some remarks:
 
 ## FAQ
 
+### Are there any non-trivial projects written in raw WAT?
+
+Yes! As a proof of concept that watever is usable & useful, I've created [watsign](https://github.com/mitschabaude/watsign), a library that implements fast cryptographic signatures (ed25519) in WAT. The API and algorithms are the same as those of popular crypto library [tweetnacl-js](https://github.com/dchest/tweetnacl-js), with our version being much faster.
+
+Another nice example of raw WAT power (unrelated to watever) is [binji/raw-wasm](https://github.com/binji/raw-wasm) which contains awesome demos.
+
 ### How am I supposed to integrate this into my project?
 
 You can use JS produced by the watever CLI directly in node (as ES module) or deno. To use it on the web, you'll need a second build step _after_ watever that performs JS bundling, like webpack.
