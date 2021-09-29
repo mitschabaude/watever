@@ -8,16 +8,17 @@
   (func $hello (export "hello#lift")
     (param $name i32) (result i32)
 
-    (local $name_length i32)
+    (local $greeting_length i32)
     (local $greeting i32)
     (local $i i32)
 
-    ;; get length of input string $name, save it in a local
+    ;; get length of input string $name, add 8 to it to calculate length of output string
     (call $get_length (local.get $name))
-    local.set $name_length
+    (i32.const 8) (i32.add)
+    local.set $greeting_length
 
-    ;; allocate new string of length (8 + $name_length), save pointer in a local
-    (call $alloc (i32.add (i32.const 8) (local.get $name_length)))
+    ;; allocate new string of the given length, save pointer
+    (call $alloc (local.get $greeting_length)))
     local.set $greeting
 
     ;; write "Hello, " into the new location, byte by byte
@@ -50,8 +51,6 @@
     )
 
     ;; return the new string
-    (call $lift_string
-      (local.get $greeting) ;; pointer to the string in memory
-    )
+    (call $lift_string (local.get $greeting))
   )
 )
