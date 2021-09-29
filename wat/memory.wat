@@ -1,10 +1,9 @@
-;; this module adds the bare necesseties for sane .wat development:
+;; this module adds bare necesseties for wat development:
 ;; * bump & reset memory management with $alloc: [i32 $length] -> [i32 $pointer] 
-;; * simple API for returning strings, booleans, byte arrays, nested objects and arrays
-;; added overhead: 235B gzipped, 335B plain
 (module
   ;; this should be provided by build pipeline, marks end of data sections
   (import "meta" "data_end" (global $data_end i32))
+  
   (import "watever/wrap.js" "addLock" (func $add_lock (param i32) (result i32)))
   (import "watever/wrap.js" "removeLock" (func $remove_lock (param i32) (result i32)))
   

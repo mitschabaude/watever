@@ -1,7 +1,5 @@
-;; this module adds the bare necesseties for sane .wat development:
-;; * bump & reset memory management with $alloc: [i32 $length] -> [i32 $pointer] 
+;; this module adds bare necesseties for wat development:
 ;; * simple API for returning strings, booleans, byte arrays, nested objects and arrays
-;; added overhead: 235B gzipped, 335B plain
 (module
   (import "./memory.wat" "alloc" (func $alloc (param i32) (result i32)))
   (import "./memory.wat" "get_length" (func $get_length (param i32) (result i32)))

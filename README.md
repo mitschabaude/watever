@@ -41,7 +41,7 @@ Let's say we have a simple WAT module, which exports a function that logs a numb
 
 The syntax is [spec-compliant WAT](https://webassembly.github.io/spec/core/text/index.html) plus conventions about how import statements are interpreted. In this example, the `(import "js" ...)` convention allows you to import arbitrary JavaScript objects with inline code.
 
-> 💡 If you're not familiar with WAT syntax, we recommend going through [this MDN explainer](https://developer.mozilla.org/en-US/docs/WebAssembly/Understanding_the_text_format) before you continue.
+> ☝️ If you're not familiar with WAT syntax, we recommend going through [this MDN explainer](https://developer.mozilla.org/en-US/docs/WebAssembly/Understanding_the_text_format) before you continue.
 
 <!-- Here, we import one function from JS and one from a second WAT module. This import syntax convention lies at the core of watever. We also export a function called `myFunction`. -->
 
