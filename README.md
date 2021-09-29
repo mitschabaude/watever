@@ -1,6 +1,6 @@
 # watever - WebAssembly text bundler
 
-`watever` is a bundler/transpiler for WebAssembly + JavaScript. We make it easy to write modules in **raw WebAssembly text format (WAT)** that are consumable across the JavaScript ecosystem.
+watever is a bundler/transpiler for WebAssembly + JavaScript. We make it easy to write modules in **raw WebAssembly text format (WAT)** that are consumable across the JavaScript ecosystem.
 
 ```sh
 npm i watever
@@ -20,7 +20,7 @@ We aim to solve all the pain points with raw WAT development:
 - Pass complex values between WAT and JS, like strings, TypedArrays, objects, etc
 - Consume async JS functions from WAT
 
-The goal is to **create fully-featured WAT modules without writing any JS glue code**. WAT files should stand on their own. After transpilation by `watever`, they act like nodes in the JS module graph that produce ESM exports & consume ESM imports.
+The goal is to **create fully-featured WAT modules without writing any JS glue code**. WAT files should stand on their own. After transpilation by watever, they act like nodes in the JS module graph that produce ESM exports & consume ESM imports.
 
 <!-- One of the consequences of going all-in on WAT linking is that we can expose utility functions (e.g., for memory management) as WAT libraries that are _only imported and bundled when needed_, instead of packing them all by default into every Wasm file. -->
 
@@ -41,9 +41,9 @@ Let's say we have a simple WAT module, which exports a function that logs a numb
 
 The syntax is [spec-compliant WAT syntax](https://developer.mozilla.org/en-US/docs/WebAssembly/Understanding_the_text_format), plus conventions about how import statements are interpreted. In this example, the `(import "js" "...")` convention allows you to import arbitrary JavaScript objects with inline code.
 
-<!-- Here, we import one function from JS and one from a second WAT module. This import syntax convention lies at the core of `watever`. We also export a function called `myFunction`. -->
+<!-- Here, we import one function from JS and one from a second WAT module. This import syntax convention lies at the core of watever. We also export a function called `myFunction`. -->
 
-Let's throw the file at `watever`:
+Let's throw the file at watever:
 
 ```sh
 npx watever log-number.wat
@@ -63,7 +63,7 @@ The only gotcha here is that our function has become **async**. That's because b
 
 ### Hello world
 
-Let's take the last example one step further and make it an actual "hello world" program. To do that, we need to pass a string to `console.log`, which is not something that plain WebAssembly allows. But `watever` makes it quite easy!
+Let's take the last example one step further and make it an actual "hello world" program. To do that, we need to pass a string to `console.log`, which is not something that plain WebAssembly allows. But watever makes it quite easy!
 
 First, here's how we will use it from JavaScript:
 
@@ -97,11 +97,11 @@ There is a bit going on here that requires explanation. First, we added an impor
 This function is used inside `$hello_world` to put an `i32` value on the stack which will be interpreted as `"Hello, world!"` by the `$log` function.
 The import `"watever/glue.wat"` gets resolved like you're used to: to a file inside `node_modules`.
 
-There's nothing special about the `"watever"` library in this regard, you could import from any npm library with the same syntax. Most importantly, you can also import from relative paths to your own WAT files, like `(import "./my-helper.wat" ...)`. All imported WAT is analyzed by `watever` and the parts that are used are added to the Wasm output. Unused code is eliminated. This is why we call `watever` a bundler! It enables multi-file WAT development and reusable, shareable code, like any proper programming language.
+There's nothing special about the `"watever"` library in this regard, you could import from any npm library with the same syntax. Most importantly, you can also import from relative paths to your own WAT files, like `(import "./my-helper.wat" ...)`. All imported WAT is analyzed by watever and the parts that are used are added to the Wasm output. Unused code is eliminated. This is why we call watever a bundler! It enables multi-file WAT development and reusable, shareable code, like any proper programming language.
 
-There is another change we made in the code above, to enable passing a string to JavaScript. We added the instruction `#lift` at the end of the first import: `"console.log#lift"`. This instruction tells `watever` to wrap `console.log` so that it understands the `i32` returned by `$lift_raw_string` and turns it into a JS string. _Lifting_ is our terminology for taking one or more low-level Wasm types (numbers) that somehow describe a high-level JS type, and transforming them into the actual JS type. In the case of `$lift_raw_string`, a string is described by 1) its starting position in memory and 2) its byte length.
+There is another change we made in the code above, to enable passing a string to JavaScript. We added the instruction `#lift` at the end of the first import: `"console.log#lift"`. This instruction tells watever to wrap `console.log` so that it understands the `i32` returned by `$lift_raw_string` and turns it into a JS string. _Lifting_ is our terminology for taking one or more low-level Wasm types (numbers) that somehow describe a high-level JS type, and transforming them into the actual JS type. In the case of `$lift_raw_string`, a string is described by 1) its starting position in memory and 2) its byte length.
 
-Currently `watever` supports lifting for integers, floats, booleans, strings, raw bytes arrays (`Uint8Array`), JS arrays, JS objects, functions and opaque external references.
+Currently watever supports lifting for integers, floats, booleans, strings, raw bytes arrays (`Uint8Array`), JS arrays, JS objects, functions and opaque external references.
 
 ### Passing values, allocating memory
 
@@ -188,7 +188,7 @@ We'll focus only on the important parts here. Especially interesting is the func
 
 See what happens here?
 
-- The export statement in the function header now reads `(export "hello#lift")`. This tells `watever` that the `(result i32)` returned from this function shall be lifted to a JS value. Lifting is always about going **WAT -> JS**, so `#lift` applies to function arguments in an import statement, and to return values in an export statement.
+- The export statement in the function header now reads `(export "hello#lift")`. This tells watever that the `(result i32)` returned from this function shall be lifted to a JS value. Lifting is always about going **WAT -> JS**, so `#lift` applies to function arguments in an import statement, and to return values in an export statement.
 
 - The string that's passed into `hello("Gregor")` in JS ends up on the WAT side as a `(param $name i32)`. This is a pointer to the memory address containing the string's bytes (UTF8-encoded by `TextEncoder`). The number of bytes allocated to a pointer can be obtained with the `$get_length` helper – this is how we get the length of the input string.
 
@@ -223,7 +223,7 @@ This `$lift_string` function is a bit simpler than `$lift_raw_string` in the las
 
 - `$alloc` handles dynamically growing the memory for you.
 
-To enable these conveniences, the module `watever/memory.wat` (which declares and exports a Wasm memory) is imported implicitly in every `watever` bundle, so that it can be exported and used by our JS wrappers. Because of that, as you may have noticed, none of our previous code examples had to declare memory. The downside is that currently, `watever` is not compatible with Wasm modules that declare their own memory, e.g. to implement custom garbage collection schemes. We expect that this can be resolved when [multiple memories](https://github.com/WebAssembly/multi-memory/blob/master/proposals/multi-memory/Overview.md) become available.
+To enable these conveniences, the module `watever/memory.wat` (which declares and exports a Wasm memory) is imported implicitly in every watever bundle, so that it can be exported and used by our JS wrappers. Because of that, as you may have noticed, none of our previous code examples had to declare memory. The downside is that currently, watever is not compatible with Wasm modules that declare their own memory, e.g. to implement custom garbage collection schemes. We expect that this can be resolved when [multiple memories](https://github.com/WebAssembly/multi-memory/blob/master/proposals/multi-memory/Overview.md) become available.
 
 ### Importing JS and handling async
 
@@ -369,7 +369,7 @@ To see WAT handling promises in action, check out the code of `$hello_github_use
 
 - We import the JS function with `(import "./github.js" "numberOfRepos" ...)`, another twist on import syntax convention.
 - At the beginning in `$hello_github_user`, we make sure that we can access the input `$username` later, when the JS promise resolves. For that, we store the pointer in a mutable global. We also invoke `$keep` from `watever/memory.wat`, which causes the pointer to stay alive even after this function returns.
-- We then call the JS function `$number_of_repos`, which returns a promise. Automatic lowering turns that promise into an `i32` which represents an opaque external reference to the promise in JS land. In the future, this will be Wasm-native behaviour, and use the [`externref` type](https://github.com/WebAssembly/reference-types/blob/master/proposals/reference-types/Overview.md), but this is so useful that `watever` sort-of polyfills it.
+- We then call the JS function `$number_of_repos`, which returns a promise. Automatic lowering turns that promise into an `i32` which represents an opaque external reference to the promise in JS land. In the future, this will be Wasm-native behaviour, and use the [`externref` type](https://github.com/WebAssembly/reference-types/blob/master/proposals/reference-types/Overview.md), but this is so useful that watever sort-of polyfills it.
 - We then call another helper, `$then` from `watever/promises.wat`. This is where we pass our promise and the table index `0` to chain another WAT function to the promise.
 - We get another promise (again, opaque) and return it.
 
@@ -408,12 +408,16 @@ export { table, hello, memory, alloc, reset };
 Some remarks:
 
 - All JS wrapper code is contained in the `wrap()` function that is imported from `watever`, so its size impact when using multiple WAT modules in one project stays small (~1.6 kB minzipped).
-- As you can see, our JS import of `"./github.js"` is converted into an actual import statement and `numberOfRepos` is passed to `wrap()` (which will pass it to `WebAssembly.instantiate`), together with other JS imports. On the other hand, imported WAT code got bundled directly into the Wasm bytecode.
-- Wasm bytecode is inlined as a base64 string. We think this approach is a far better default than fetching a `.wasm` file, for the same reason that we bundle JS modules by default: because it saves a roundtrip to the server (that is only initiated after the importing file has loaded). Code-splitting can be a good thing, but should be applied with purpose and not as a random byproduct of using Wasm and JS together.
+- As you can see, our `(import "./github.js" "numberOfRepos" ...)` is converted into a JS import statement and `numberOfRepos` is passed to `wrap()` (which will pass it to `WebAssembly.instantiate`), together with other JS imports. On the other hand, imported WAT got bundled directly into the Wasm bytecode.
+- Wasm bytecode is inlined as a base64 string. I think this is a far better default than fetching a `.wasm` file, for the same reason that we bundle JS modules by default: because, when deployed on the web, it saves a roundtrip to the server that is only initiated after the importing file has loaded. Code-splitting is a good thing, but should be applied with purpose and not as a random by-product of using Wasm in JS.
 
-Currently, you can use the `watever` CLI as a build step that comes _before_ JS bundling.
+## FAQ
 
-In the future, we plan to create plugins for popular build tools like webpack, to avoid a separate build step for WAT. This will also enable optimizations like tree-shaking WAT modules based on what is imported from them on the JS side.
+### How am I supposed to integrate this into my project?
+
+You can use JS produced by the watever CLI directly in node (as ES module) or deno. To use it on the web, you'll need a second build step _after_ watever that performs JS bundling, like webpack.
+
+In the future, I plan to create plugins to integrate watever in popular JS build pipelines, to only have one build step. This will also enable optimizations like tree-shaking WAT modules based on what is imported from them on the JS side. In fact, this project originated from [esbuild-plugin-wat](https://github.com/mitschabaude/esbuild-plugin-wat) which quickly got out of hand as I wanted to add more and more features 😅
 
 ## TODOs
 
@@ -425,6 +429,6 @@ In the future, we plan to create plugins for popular build tools like webpack, t
 
 <!-- FAQ material: -->
 
-<!-- When developing modules with WAT, you'll probably find that you use `#lift` on most exported functions. So why don't we just make this the default behaviour? The reason is that `#lift` implies that you cannot just pass a normal integer to JS as an `i32` any more (you'd need another helper from `watever/glue.wat` for that, `"lift_int"`). In other words, automatic lifting would break plain WAT code that knows nothing about lifting. However, `watever` wants to be a general-purpose tool applicable across the WebAssembly ecosystem. It should be usable to turn _any_ WAT or Wasm file into a JS module. Therefore, the default behaviour must be to leave `i32` untransformed. -->
+<!-- When developing modules with WAT, you'll probably find that you use `#lift` on most exported functions. So why don't we just make this the default behaviour? The reason is that `#lift` implies that you cannot just pass a normal integer to JS as an `i32` any more (you'd need another helper from `watever/glue.wat` for that, `"lift_int"`). In other words, automatic lifting would break plain WAT code that knows nothing about lifting. However, watever wants to be a general-purpose tool applicable across the WebAssembly ecosystem. It should be usable to turn _any_ WAT or Wasm file into a JS module. Therefore, the default behaviour must be to leave `i32` untransformed. -->
 
 <!--  Should the memory become too large after a function call (> 10MB), we delete the Wasm instance to allow it to be garbage collected, and cheaply reinstantiate it on the next call. This (sadly) is the only way to avoid potential memory leaks in Wasm. -->
