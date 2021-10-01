@@ -33,7 +33,7 @@
     "minimist": "^1.2.5",
     "parse-imports": "^1.1.0",
     "wabt": "latest",
-    "watever-js-wrapper": "file:watever-js-wrapper"
+    "watever-js-wrapper": "0.1.0"
   },
   "bin": {
     "watever": "./bin/watever.js"
