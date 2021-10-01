@@ -1,0 +1,28 @@
+{
+  "name": "watever-js-wrapper",
+  "version": "0.1.0",
+  "main": "wrap.js",
+  "type": "module",
+  "license": "MIT",
+  "description": "JS glue code for WebAssembly bundled by watever",
+  "author": "Gregor Mitscha-Baude <gregor.mitscha-baude@gmx.at>",
+  "homepage": "https://github.com/mitschabaude/watever",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mitschabaude/watever"
+  },
+  "keywords": [
+    "webassembly",
+    "bundler",
+    "build-tool"
+  ],
+  "exports": {
+    ".": "./wrap.js",
+    "./wrap.js": "./wrap.js"
+  },
+  "scripts": {},
+  "files": [
+    "wrap.js"
+  ],
+  "devDependencies": {}
+}

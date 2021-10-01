@@ -48,7 +48,7 @@ async function embedWasm(
   }
   importString += " }";
   let content = "";
-  content += `import {wrap} from "watever/wrap.js";`;
+  content += `import {wrap} from "watever-js-wrapper";`;
   content += jsImportStrings + "\n";
   content += `let wasm = ${JSON.stringify(wasmBase64)};\n`;
   content += `let {${exportString}} = wrap(wasm, ${JSON.stringify(
@@ -57,9 +57,9 @@ async function embedWasm(
   content += `export {${exportString}};\n`;
   if (deno) {
     content = content.replace(
-      /from "watever\/wrap.js"/g,
+      /from "watever-js-wrapper"/g,
       // `from "../wrap.js"`
-      `from "https://raw.githubusercontent.com/mitschabaude/watever/main/wrap.js"`
+      `from "https://raw.githubusercontent.com/mitschabaude/watever/main/watever-js-wrapper/wrap.js"`
     );
   }
   return content;

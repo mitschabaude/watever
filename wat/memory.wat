@@ -4,8 +4,8 @@
   ;; this should be provided by build pipeline, marks end of data sections
   (import "meta" "data_end" (global $data_end i32))
   
-  (import "watever/wrap.js" "addLock" (func $add_lock (param i32) (result i32)))
-  (import "watever/wrap.js" "removeLock" (func $remove_lock (param i32) (result i32)))
+  (import "watever-js-wrapper" "addLock" (func $add_lock (param i32) (result i32)))
+  (import "watever-js-wrapper" "removeLock" (func $remove_lock (param i32) (result i32)))
   
   (export "memory" (memory $memory))
   (export "alloc" (func $alloc))

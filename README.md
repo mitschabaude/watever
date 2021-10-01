@@ -132,17 +132,19 @@ This time, WAT's responsibility is not to log anything but to transform a string
   (func $hello (export "hello#lift")
     (param $name i32) (result i32)
 
+    (local $name_length i32)
     (local $greeting_length i32)
     (local $greeting i32)
     (local $i i32)
 
     ;; get length of input string $name, add 8 to it to calculate length of output string
     (call $get_length (local.get $name))
+    local.tee $name_length
     (i32.const 8) (i32.add)
     local.set $greeting_length
 
-    ;; allocate memory of the given length, save pointer in local $greeting
-    (call $alloc (local.get $greeting_length)))
+    ;; allocate new string of the given length, save pointer
+    (call $alloc (local.get $greeting_length))
     local.set $greeting
 
     ;; write "Hello, " into the new location, byte by byte
@@ -433,6 +435,7 @@ In the future, I plan to create plugins to integrate watever in popular JS build
 - watch mode for the CLI
 - enable post-MVP syntax that's still missing from @webassemblyjs
 - merge together start sections from imported modules
+- think about this: if we would go all in on `externref` and do lowering inside functions, we could avoid the need for implicitly exported memory and offer true compatibility with the wider wasm world
 <!-- - deno integration: enable importing `.wat` from URL? -->
 
 <!-- FAQ material: -->

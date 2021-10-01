@@ -19,8 +19,6 @@
   "exports": {
     ".": "./index.js",
     "./index.js": "./index.js",
-    "./wrap": "./wrap.js",
-    "./wrap.js": "./wrap.js",
     "./*.wat": "./wat/*.wat"
   },
   "scripts": {
@@ -34,7 +32,8 @@
     "fast-base64": "^0.1.6",
     "minimist": "^1.2.5",
     "parse-imports": "^1.1.0",
-    "wabt": "latest"
+    "wabt": "latest",
+    "watever-js-wrapper": "file:watever-js-wrapper"
   },
   "bin": {
     "watever": "./bin/watever.js"
@@ -45,10 +44,13 @@
     "index.js",
     "bundle.js",
     "embed.js",
-    "wrap.js"
+    "watever-js-wrapper"
   ],
   "devDependencies": {
     "chrode": "^0.3.2",
     "eslint": "^8.0.0-beta.2"
-  }
+  },
+  "workspaces": [
+    "watever-js-wrapper"
+  ]
 }
