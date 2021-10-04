@@ -3,40 +3,45 @@ import minimist from "minimist";
 import path from "node:path";
 import fs from "node:fs";
 import buildWat from "../index.js";
+import { printFunction } from "./printFunction.js";
 
-let {
-  _: watPaths,
-  wat,
-  all,
-  o,
-  imports,
-  s,
-  deno,
-} = minimist(process.argv.slice(2));
+let { _: watPaths, ...options } = minimist(process.argv.slice(2));
 
 // TODO: support nowrap in some way, but as an annotation in the module, not as a compile flag
 // nowrap=true would currently create a wasm bundle without secretly exported alloc, free, memory
 // but free/memory would be expected by wrap-wasm
 // so need to modify embed-wasm to indicate to wrap-wasm that we don't want that extra exports
 let nowrap = false;
-
 let multiple = watPaths.length > 1;
-let options = { wat, all, o, imports, multiple, nowrap, silent: s, deno };
 
 for (let watPath of watPaths) {
-  await processWat(watPath, options);
+  await processWat(watPath, { multiple, ...options, wrap: !nowrap });
 }
 
 async function processWat(
   watPath,
-  { wat, all, o, imports, multiple, nowrap, silent, deno }
+  {
+    wat,
+    all,
+    o,
+    imports,
+    multiple,
+    wrap,
+    s: silent,
+    deno,
+    "print-function": iPrintFunction,
+  }
 ) {
   imports = imports ? new Set(imports.split(",")) : undefined;
 
   let options = multiple
-    ? { path: watPath, wrap: !nowrap, deno }
-    : { path: watPath, wrap: !nowrap, deno, imports };
+    ? { path: watPath, wrap, deno }
+    : { path: watPath, wrap, deno, imports };
   let result = await buildWat(options);
+
+  if (iPrintFunction !== undefined) {
+    printFunction(result.wat, iPrintFunction);
+  }
 
   if (all) console.log(result);
   else if (wat) console.log(result.wat);
