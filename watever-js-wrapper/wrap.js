@@ -11,7 +11,7 @@ function wrap(wasmCode, exports, imports = {}) {
       imports.js[importStr] = (0, eval)(imports.js[importStr]);
     }
   }
-  let wrapper = (modules[currentId++] = { imports });
+  let wrapper = (modules[currentId++] = { imports, externrefs: {} });
   for (let importModule of Object.values(imports)) {
     for (let name in importModule) {
       let imported = importModule[name];
@@ -71,6 +71,7 @@ function wrapFunction(name, wrapper, flags) {
 function cleanup(wrapper) {
   let { memory, reset } = wrapper.instance.exports;
   reset();
+  wrapper.externrefs = {};
   if (memory.buffer.byteLength >= 1e7) {
     console.warn(
       "Cleaning up Wasm instance, memory limit of 10MB was exceeded."
@@ -109,7 +110,6 @@ function wrapLiftedFunction(func, wrapper) {
   };
 }
 
-let externrefs = {};
 let refId = 0;
 
 function lower(value, wrapper) {
@@ -146,7 +146,7 @@ function lower(value, wrapper) {
         return pointer;
       } else {
         let id = refId++;
-        externrefs[id] = value;
+        wrapper.externrefs[id] = value;
         return id;
       }
     }
@@ -220,7 +220,7 @@ function readValue(context) {
     case 7: {
       offset += 4;
       value = view.getInt32(offset, true);
-      value = externrefs[value];
+      value = context.wrapper.externrefs[value];
       offset += 4;
       break;
     }
