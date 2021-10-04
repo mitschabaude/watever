@@ -29,7 +29,7 @@
 
   (func $createArray
     (result i32)
-    (local $pointer i32)
+    ;; (local $pointer i32)
     (local $bytes0 i32)
     (local $bytes1 i32)
 
@@ -53,6 +53,7 @@
 
     i32.const 6
     call $new_array
+    ;; local.set $pointer
 
     i32.const 9
     call $lift_int
@@ -69,7 +70,7 @@
     f64.const 3.141592
     call $lift_float
     drop
-    i32.const 1
+    i32.const 2
     call $new_object
     drop
     global.get $EVEN
@@ -77,6 +78,12 @@
     global.get $EVEN
     call $lift_string
     drop
+    global.get $NOT_EVEN
+    call $add_entry
+    i32.const 1
+    call $lift_int
+    drop
+    ;; local.get $pointer
   )
 
   (func $double

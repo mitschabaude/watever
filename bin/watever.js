@@ -41,6 +41,7 @@ async function processWat(
 
   if (iPrintFunction !== undefined) {
     printFunction(result.wat, iPrintFunction);
+    return;
   }
 
   if (all) console.log(result);

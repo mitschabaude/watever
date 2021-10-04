@@ -169,6 +169,7 @@ function lift(value, wrapper) {
 
 function readValue(context) {
   let { memory, offset, view } = context;
+  offset += 4;
   let type = view.getUint8(offset++);
   let value;
   switch (type) {
@@ -210,9 +211,9 @@ function readValue(context) {
       value = new Array(length);
       context.offset = offset;
       for (let i = 0; i < length; i++) {
-        context.offset = context.offset + 4;
         value[i] = readValue(context);
       }
+      offset = context.offset;
       if (type === 6) value = Object.fromEntries(value);
       break;
     }

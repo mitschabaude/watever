@@ -106,10 +106,11 @@
     (local $pointer i32)
     i32.const 1
     call $alloc
-    local.tee $pointer
+    local.set $pointer
     local.get $pointer
     local.get 0
     i32.store8
+    (i32.sub (local.get $pointer) (i32.const 4))
   )
 
   (func $store32
