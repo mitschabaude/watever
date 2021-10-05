@@ -3,6 +3,7 @@
   (import "js" "(p, c, ...args) => p.then(x => c(x, ...args))#lift" (func $js_then_1 (param i32 i32 i32) (result i32)))
   (import "js" "(p, c, ...args) => p.then(x => c(x, ...args))#lift" (func $js_then_2 (param i32 i32 i32 i32) (result i32)))
   (import "js" "(p, c, ...args) => p.then(x => c(x, ...args))#lift" (func $js_then_3 (param i32 i32 i32 i32 i32) (result i32)))
+  (import "js" "(p, c, ...args) => p.then(x => c(x, ...args))#lift" (func $js_then_4 (param i32 i32 i32 i32 i32 i32) (result i32)))
 
   (import "./glue.wat" "lift_extern" (func $lift_extern (param i32) (result i32)))
   (import "./glue.wat" "lift_function" (func $lift_function (param i32) (result i32)))
@@ -13,6 +14,7 @@
   (export "then_1" (func $then_1))
   (export "then_2" (func $then_2))
   (export "then_3" (func $then_3))
+  (export "then_4" (func $then_4))
 
   ;; takes a promise (=externref) + a function index in the only table, which has to be exported as "table"
   ;; returns another promise (=externref)
@@ -40,6 +42,12 @@
     (call $lift_function (local.get $index))
     (local.get $a0) (local.get $a1) (local.get $a2)
     (call $js_then_3)
+  )
+  (func $then_4 (param $promise i32) (param $index i32) (param $a0 i32) (param $a1 i32) (param $a2 i32) (param $a3 i32) (result i32)
+    (call $lift_extern (local.get $promise))
+    (call $lift_function (local.get $index))
+    (local.get $a0) (local.get $a1) (local.get $a2) (local.get $a3)
+    (call $js_then_4)
   )
 
   ;; same as $then but returns an already lifted promise that can be returned to JS
