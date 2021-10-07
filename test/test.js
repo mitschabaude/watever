@@ -6,32 +6,32 @@ let x = await asyncCall();
 console.log(x);
 
 let bytes = new Uint8Array([1, 2, 3, 4]);
-let total = await sum(bytes);
+let total = sum(bytes);
 console.log("sum", total);
 
-console.log("memory", await memory());
+console.log("memory", memory);
 
-let avgResult = await avg(bytes);
+let avgResult = avg(bytes);
 console.log("avg", avgResult);
 
-let doubleResult = await double(bytes);
+let doubleResult = double(bytes);
 console.log("double", doubleResult);
 
 console.log(
   "isSumEven",
-  await isSumEven(new Uint8Array([1, 1, 0])),
-  await isSumEven(new Uint8Array([1, 1, 1]))
+  isSumEven(new Uint8Array([1, 1, 0])),
+  isSumEven(new Uint8Array([1, 1, 1]))
 );
 
 console.log(
   "howIsSum",
-  await howIsSum(new Uint8Array([1, 1, 0])),
-  await howIsSum(new Uint8Array([1, 1, 1]))
+  howIsSum(new Uint8Array([1, 1, 0])),
+  howIsSum(new Uint8Array([1, 1, 1]))
 );
 
 // let str = '🤪 hello world! 🤪 ';
 // let twiceResult = await twice(str);
 // console.log(`twice "${twiceResult}"`);
 
-let arrayResult = await createArray();
+let arrayResult = createArray();
 console.log("array", arrayResult);

@@ -1,3 +1,3 @@
 import { hello } from "./hello-name.wat.js";
-let greeting = await hello("Gregor");
+let greeting = hello("Gregor");
 console.log(greeting);

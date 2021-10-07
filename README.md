@@ -55,11 +55,11 @@ This creates a JS file `log-number.wat.js` which exposes our exported `logNumber
 
 ```js
 import { logNumber } from "./log-number.wat.js";
-await logNumber();
+logNumber();
 // "3.14159265"
 ```
 
-The only gotcha here is that our function has become **async**. That's because behind the scenes we have to unwrap the Promise returned by `WebAssembly.instantiate`. (We might change this behaviour when top-level await is supported widely enough.)
+And that's it!
 
 > 🎮 **Try it yourself:** You can find these code snippets under `/examples`. Clone the repo, transpile with `npx watever examples/*.wat` and run them like `node examples/log-number.js`. To run them with deno, use the `--deno` flag when transpiling: `npx watever examples/*.wat --deno`.
 
@@ -71,7 +71,7 @@ First, here's how we will use it from JavaScript:
 
 ```js
 import { helloWorld } from "./hello-world.wat.js";
-await helloWorld();
+helloWorld();
 // "Hello, world!"
 ```
 
@@ -111,7 +111,7 @@ Let's learn some more possibilities. We make another slight change and give our 
 
 ```js
 import { hello } from "./hello-name.wat.js";
-let greeting = await hello("Gregor");
+let greeting = hello("Gregor");
 console.log(greeting);
 // "Hello, Gregor!"
 ```
@@ -240,7 +240,8 @@ console.log(greeting);
 // "Hello, mitschabaude! I see you have 19 github repositories."
 ```
 
-To achieve this, we're going to import the following JS module, which can fetch the number of repos from Github's REST API:
+Note that the exported function `hello()` is async this time.
+In the WAT code, we're going to import the following JS module, which can fetch the number of repos from Github's REST API:
 
 ```js
 // github.js

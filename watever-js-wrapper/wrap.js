@@ -6,12 +6,19 @@ let encoder = new TextEncoder();
 let decoder = new TextDecoder();
 
 function wrap(wasmCode, exports, imports = {}) {
+  if (typeof wasmCode === "string") wasmCode = toBytes(wasmCode);
+  let mod = new WebAssembly.Module(wasmCode);
+  let wrapper = (modules[currentId++] = {
+    imports,
+    externrefs: {},
+    module: mod,
+  });
+
   if (imports.js) {
     for (let importStr in imports.js) {
       imports.js[importStr] = (0, eval)(imports.js[importStr]);
     }
   }
-  let wrapper = (modules[currentId++] = { imports, externrefs: {} });
   for (let importModule of Object.values(imports)) {
     for (let name in importModule) {
       let imported = importModule[name];
@@ -21,13 +28,7 @@ function wrap(wasmCode, exports, imports = {}) {
       }
     }
   }
-  if (typeof wasmCode === "string") wasmCode = toBytes(wasmCode);
-  let instantiated = WebAssembly.instantiate(wasmCode, imports);
-  wrapper.modulePromise = instantiated.then((i) => i.module);
-  wrapper.instancePromise = instantiated.then((i) => i.instance);
-  wrapper.instancePromise.then((i) => {
-    wrapper.instance = i;
-  });
+  ensureInstance(wrapper);
   return Object.fromEntries(
     exports.map((exp) => {
       let [actualExport, flags] = exp.split("#");
@@ -37,27 +38,24 @@ function wrap(wasmCode, exports, imports = {}) {
   );
 }
 
-async function getInstance(wrapper) {
-  let { modulePromise, instancePromise, imports } = wrapper;
-  if (instancePromise === undefined) {
-    wrapper.instancePromise = modulePromise.then((m) =>
-      WebAssembly.instantiate(m, imports)
-    );
-    wrapper.instance = await wrapper.instancePromise;
-    return wrapper.instance;
-  } else {
-    return instancePromise;
-  }
+function ensureInstance(wrapper) {
+  return (
+    wrapper.instance ??
+    (wrapper.instance = new WebAssembly.Instance(
+      wrapper.module,
+      wrapper.imports
+    ))
+  );
 }
 
 function wrapFunction(name, wrapper, flags) {
   let doLift = flags.includes("lift");
   let doLower = true; //flags.includes("lower");
-
-  return async function call(...args) {
-    let instance = await getInstance(wrapper);
+  let thing = wrapper.instance.exports[name];
+  if (typeof thing !== "function") return thing;
+  return function call(...args) {
+    let instance = ensureInstance(wrapper);
     let func = instance.exports[name];
-    if (typeof func !== "function") return func;
     let actualArgs = doLower ? args.map((arg) => lower(arg, wrapper)) : args;
     try {
       let result = func(...actualArgs);
@@ -77,7 +75,6 @@ function cleanup(wrapper) {
       "Cleaning up Wasm instance, memory limit of 10MB was exceeded."
     );
     queueMicrotask(() => {
-      wrapper.instancePromise = undefined;
       wrapper.instance = undefined;
     });
   }
