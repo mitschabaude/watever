@@ -1,6 +1,6 @@
 {
   "name": "watever-js-wrapper",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "main": "wrap.js",
   "type": "module",
   "license": "MIT",

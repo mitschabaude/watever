@@ -1,6 +1,6 @@
 {
   "name": "watever",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "main": "index.js",
   "type": "module",
   "license": "MIT",
@@ -29,11 +29,11 @@
     "@webassemblyjs/wasm-parser": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wasm-parser.tgz",
     "@webassemblyjs/wast-parser": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wast-parser.tgz",
     "@webassemblyjs/wast-printer": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wast-printer.tgz",
-    "fast-base64": "^0.1.6",
+    "fast-base64": "^0.1.8",
     "minimist": "^1.2.5",
     "parse-imports": "^1.1.0",
     "wabt": "latest",
-    "watever-js-wrapper": "0.3.0"
+    "watever-js-wrapper": "0.3.2"
   },
   "bin": {
     "watever": "./bin/watever.js"

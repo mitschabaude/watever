@@ -16,7 +16,8 @@ function wrap(wasmCode, exports, imports = {}) {
     for (let name in importModule) {
       let imported = importModule[name];
       if (typeof imported === "function") {
-        let flags = name.split("#")[1]?.split(",") ?? [];
+        let flags = name.split("#")[1];
+        flags = flags !== undefined ? flags.split(",") : [];
         importModule[name] = wrapImportFunction(imported, wrapper, flags);
       }
     }
@@ -31,7 +32,7 @@ function wrap(wasmCode, exports, imports = {}) {
   return Object.fromEntries(
     exports.map((exp) => {
       let [actualExport, flags] = exp.split("#");
-      flags = flags?.split(",") ?? [];
+      flags = flags !== undefined ? flags.split(",") : [];
       return [actualExport, wrapFunction(exp, wrapper, flags)];
     })
   );
@@ -124,7 +125,7 @@ function lower(value, wrapper) {
       let pointer = alloc(4 * value.length);
       let copy = new Uint8Array(memory.buffer, pointer, 2 * value.length);
       let { written } = encoder.encodeInto(value, copy);
-      let length = written ?? 0;
+      let length = written !== undefined ? written : 0;
       // replace length written by alloc to actual string length
       // (this operation is allowed as long as the length gets smaller)
       let view = new DataView(memory.buffer, pointer - 4, 4);
