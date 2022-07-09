@@ -5,7 +5,13 @@ let untouchedImports = new Set(["js"]);
 
 async function embedWasm(
   { wasm, wat, exportNames, watchFiles, imports: innerImports }, // result of bundleWasm
-  { path: wasmPath, wrap = false, imports: outerImports, deno = false } // same options as bundleWasm
+  {
+    path: wasmPath,
+    wrap = false,
+    imports: outerImports,
+    deno = false,
+    sync = false,
+  } // mostly same options as bundleWasm
 ) {
   // TODO: enable version which doesn't wrap module at all (just instantiates it & and creates named exports)
   let wasmBase64 = await toBase64(wasm);
@@ -51,15 +57,21 @@ async function embedWasm(
   content += `import {wrap} from "watever-js-wrapper";`;
   content += jsImportStrings + "\n";
   content += `let wasm = ${JSON.stringify(wasmBase64)};\n`;
-  content += `let {${exportString}} = wrap(wasm, ${JSON.stringify(
-    exportNames
-  )}, ${importString});\n`;
+  content += `let {${exportString}} = ${
+    sync ? "await " : ""
+  }wrap(wasm, ${JSON.stringify(exportNames)}, ${importString});\n`;
   content += `export {${exportString}};\n`;
-  if (deno) {
+  if (deno || sync) {
+    let wateverJsWrapper =
+      deno && sync
+        ? "https://raw.githubusercontent.com/mitschabaude/watever/main/watever-js-wrapper-sync/wrap.js"
+        : deno
+        ? "https://raw.githubusercontent.com/mitschabaude/watever/main/watever-js-wrapper/wrap.js"
+        : "watever-js-wrapper-sync";
     content = content.replace(
       /from "watever-js-wrapper"/g,
       // `from "../wrap.js"`
-      `from "https://raw.githubusercontent.com/mitschabaude/watever/main/watever-js-wrapper/wrap.js"`
+      `from "${wateverJsWrapper}"`
     );
   }
   return content;

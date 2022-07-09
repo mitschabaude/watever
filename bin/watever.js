@@ -30,13 +30,14 @@ async function processWat(
     s: silent,
     deno,
     "print-function": iPrintFunction,
+    sync,
   }
 ) {
   imports = imports ? new Set(imports.split(",")) : undefined;
 
   let options = multiple
-    ? { path: watPath, wrap, deno }
-    : { path: watPath, wrap, deno, imports };
+    ? { path: watPath, wrap, deno, sync }
+    : { path: watPath, wrap, deno, imports, sync };
   let result = await buildWat(options);
 
   if (iPrintFunction !== undefined) {
