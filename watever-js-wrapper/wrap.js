@@ -53,13 +53,12 @@ async function getInstance(wrapper) {
 
 function wrapFunction(name, wrapper, flags) {
   let doLift = flags.includes("lift");
-  let doLower = true; //flags.includes("lower");
 
   return async function call(...args) {
     let instance = await getInstance(wrapper);
     let func = instance.exports[name];
     if (typeof func !== "function") return func;
-    let actualArgs = doLower ? args.map((arg) => lower(arg, wrapper)) : args;
+    let actualArgs = args.map((arg) => lower(arg, wrapper));
     try {
       let result = func(...actualArgs);
       return doLift ? lift(result, wrapper) : result;
@@ -114,12 +113,9 @@ function wrapLiftedFunction(func, wrapper) {
 let refId = 0;
 
 function lower(value, wrapper) {
+  if (typeof value === "number" || value === undefined) return value;
   let { alloc, memory } = wrapper.instance.exports;
   switch (typeof value) {
-    case "undefined":
-      return undefined;
-    case "number":
-      return value;
     case "string": {
       // allocate conservative estimate of string length
       let pointer = alloc(4 * value.length);
@@ -189,19 +185,22 @@ function readValue(context) {
       value = !!view.getUint8(offset++);
       break;
     case 3:
-    case 4: {
+    case 4:
+    case 9: {
       offset += 4;
-      let pointer2 = view.getUint32(offset, true);
+      let pointer = view.getUint32(offset, true);
       offset += 4;
       offset += 4;
       let length = view.getUint32(offset, true);
       offset += 4;
       if (type === 3)
-        value = new Uint8Array(
-          memory.buffer.slice(pointer2, pointer2 + length)
+        value = new Uint8Array(memory.buffer.slice(pointer, pointer + length));
+      else if (type === 9) {
+        value = new BigUint64Array(
+          memory.buffer.slice(pointer, pointer + length)
         );
-      else {
-        value = decoder.decode(new Uint8Array(memory.buffer, pointer2, length));
+      } else {
+        value = decoder.decode(new Uint8Array(memory.buffer, pointer, length));
       }
       break;
     }

@@ -13,6 +13,8 @@
   (export "lift_raw_string" (func $lift_raw_string))
   (export "lift_extern" (func $lift_extern))
   (export "lift_function" (func $lift_function))
+  (export "lift_uint64array" (func $lift_uint64array))
+  (export "lift_raw_uint64array" (func $lift_raw_uint64array))
   (export "new_array" (func $new_array))
   (export "new_object" (func $new_object))
   (export "add_entry" (func $add_entry))
@@ -26,6 +28,7 @@
   (global $OBJECT i32 (i32.const 6))
   (global $EXTERN i32 (i32.const 7))
   (global $FUNCTION i32 (i32.const 8))
+  (global $UINT64ARRAY i32 (i32.const 9))
 
   (func $lift_int
     (param i32) (result i32)
@@ -77,6 +80,18 @@
     (param $index i32) (result i32)
     (call $store8 (global.get $FUNCTION))
     (call $store32 (local.get 0))
+  )
+  (func $lift_uint64array
+    (param $pointer i32) (result i32)
+    (call $store8 (global.get $UINT64ARRAY))
+    (call $store32 (local.get $pointer))
+    (call $store32 (call $get_length (local.get $pointer)))
+  )
+  (func $lift_raw_uint64array
+    (param $offset i32) (param $length i32) (result i32)
+    (call $store8 (global.get $UINT64ARRAY))
+    (call $store32 (local.get $offset))
+    (call $store32 (local.get $length))
   )
 
   ;; these 2 return a pointer that should be the return value
