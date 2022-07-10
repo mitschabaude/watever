@@ -11,6 +11,7 @@ async function embedWasm(
     imports: outerImports,
     deno = false,
     sync = false,
+    noAutoFree = false,
   } // mostly same options as bundleWasm
 ) {
   // TODO: enable version which doesn't wrap module at all (just instantiates it & and creates named exports)
@@ -59,15 +60,17 @@ async function embedWasm(
   content += `let wasm = ${JSON.stringify(wasmBase64)};\n`;
   content += `let {${exportString}} = ${
     sync ? "await " : ""
-  }wrap(wasm, ${JSON.stringify(exportNames)}, ${importString});\n`;
+  }wrap(wasm, ${JSON.stringify(exportNames)}, ${importString}, ${
+    noAutoFree ? "{noAutoFree: true}" : "{}"
+  });\n`;
   content += `export {${exportString}};\n`;
   if (deno || sync) {
     let wateverJsWrapper =
       deno && sync
-        ? "https://raw.githubusercontent.com/mitschabaude/watever/main/watever-js-wrapper-sync/wrap.js"
+        ? "https://raw.githubusercontent.com/mitschabaude/watever/main/watever-js-wrapper/sync.js"
         : deno
         ? "https://raw.githubusercontent.com/mitschabaude/watever/main/watever-js-wrapper/wrap.js"
-        : "watever-js-wrapper-sync";
+        : "watever-js-wrapper/sync";
     content = content.replace(
       /from "watever-js-wrapper"/g,
       // `from "../wrap.js"`

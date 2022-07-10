@@ -31,13 +31,13 @@ async function processWat(
     deno,
     "print-function": iPrintFunction,
     sync,
+    "auto-free": autoFree,
   }
 ) {
   imports = imports ? new Set(imports.split(",")) : undefined;
-
   let options = multiple
-    ? { path: watPath, wrap, deno, sync }
-    : { path: watPath, wrap, deno, imports, sync };
+    ? { path: watPath, wrap, deno, sync, noAutoFree: !autoFree }
+    : { path: watPath, wrap, deno, imports, sync, noAutoFree: !autoFree };
   let result = await buildWat(options);
 
   if (iPrintFunction !== undefined) {

@@ -5,7 +5,12 @@ let currentId = 0;
 let encoder = new TextEncoder();
 let decoder = new TextDecoder();
 
-async function wrap(wasmCode, exports, imports = {}) {
+async function wrap(
+  wasmCode,
+  exports,
+  imports = {},
+  { noAutoFree = false } = {}
+) {
   if (typeof wasmCode === "string") wasmCode = toBytes(wasmCode);
 
   if (imports.js) {
@@ -32,6 +37,7 @@ async function wrap(wasmCode, exports, imports = {}) {
     exports.map((exp) => {
       let [actualExport, flags] = exp.split("#");
       flags = flags !== undefined ? flags.split(",") : [];
+      if (noAutoFree) flags.push("noAutoFree");
       return [actualExport, wrapFunction(exp, wrapper, flags)];
     })
   );
@@ -39,6 +45,7 @@ async function wrap(wasmCode, exports, imports = {}) {
 
 function wrapFunction(name, wrapper, flags) {
   let doLift = flags.includes("lift");
+  let doCleanup = !flags.includes("noAutoFree");
   let func = wrapper.instance.exports[name];
   if (typeof func !== "function") return func;
 
@@ -48,7 +55,7 @@ function wrapFunction(name, wrapper, flags) {
       let result = func(...actualArgs);
       return doLift ? lift(result, wrapper) : result;
     } finally {
-      cleanup(wrapper);
+      if (doCleanup) cleanup(wrapper);
     }
   };
 }

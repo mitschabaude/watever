@@ -18,7 +18,9 @@
   ],
   "exports": {
     ".": "./wrap.js",
-    "./wrap.js": "./wrap.js"
+    "./wrap.js": "./wrap.js",
+    "./sync": "./sync.js",
+    "./sync.js": "./sync.js"
   },
   "scripts": {},
   "files": [
