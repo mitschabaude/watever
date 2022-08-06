@@ -126,7 +126,7 @@ function lower(value, wrapper) {
       let length = written !== undefined ? written : 0;
       // replace length written by alloc to actual string length
       // (this operation is allowed as long as the length gets smaller)
-      let view = new DataView(memory.buffer, pointer - 4, 4);
+      let view = new DataView(memory.buffer, pointer - 8, 4);
       view.setInt32(0, length, true);
       return pointer;
     }
@@ -166,38 +166,52 @@ function lift(value, wrapper) {
   });
 }
 
+const INT = 0;
+const FLOAT = 1;
+const BOOL = 2;
+const BYTES = 3;
+const STRING = 4;
+const ARRAY = 5;
+const OBJECT = 6;
+const EXTERN = 7;
+const FUNCTION = 8;
+const UINT64ARRAY = 9;
+
 function readValue(context) {
   let { memory, offset, view } = context;
-  offset += 4;
-  let type = view.getUint8(offset++);
+  offset += 8; // skip length
+  let type = view.getUint8(offset);
+  offset += 8; // int8 type
   let value;
   switch (type) {
-    case 0:
-      offset += 4;
+    case INT:
+      offset += 8; // skip length
       value = view.getInt32(offset, true);
-      offset += 4;
+      offset += 8; // int32
       break;
-    case 1:
-      offset += 4;
+    case FLOAT:
+      offset += 8; // skip length
       value = view.getFloat64(offset, true);
-      offset += 8;
+      offset += 8; // float
       break;
-    case 2:
-      offset += 4;
-      value = !!view.getUint8(offset++);
+    case BOOL:
+      offset += 8; // skip length
+      value = !!view.getUint8(offset);
+      offset += 8; // bool
       break;
-    case 3:
-    case 4:
-    case 9: {
-      offset += 4;
+    case BYTES:
+    case STRING:
+    case UINT64ARRAY: {
+      offset += 8; // skip length
       let pointer = view.getUint32(offset, true);
-      offset += 4;
-      offset += 4;
+      offset += 8; // int32 pointer
+      // ---------------------------------------
+      offset += 8; // skip length
       let length = view.getUint32(offset, true);
-      offset += 4;
-      if (type === 3)
+      offset += 8; // int32 length
+      if (type === BYTES)
         value = new Uint8Array(memory.buffer.slice(pointer, pointer + length));
-      else if (type === 9) {
+      else if (type === UINT64ARRAY) {
         value = new BigUint64Array(
           memory.buffer.slice(pointer, pointer + length)
         );
@@ -206,31 +220,32 @@ function readValue(context) {
       }
       break;
     }
-    case 5:
-    case 6: {
-      offset += 4;
-      let length = view.getUint8(offset++);
+    case ARRAY:
+    case OBJECT: {
+      offset += 8; // skip length
+      let length = view.getUint8(offset);
+      offset += 8; // int8 array length
       value = new Array(length);
       context.offset = offset;
       for (let i = 0; i < length; i++) {
         value[i] = readValue(context);
       }
       offset = context.offset;
-      if (type === 6) value = Object.fromEntries(value);
+      if (type === OBJECT) value = Object.fromEntries(value);
       break;
     }
-    case 7: {
-      offset += 4;
+    case EXTERN: {
+      offset += 8; // skip length
       value = view.getInt32(offset, true);
       value = context.wrapper.externrefs[value];
-      offset += 4;
+      offset += 8; // int32 externref index
       break;
     }
-    case 8: {
+    case FUNCTION: {
       let { table } = context.wrapper.instance.exports;
-      offset += 4;
+      offset += 8; // skip length
       let index = view.getInt32(offset, true);
-      offset += 4;
+      offset += 8; // int32 table index
       value = wrapLiftedFunction(table.get(index), context.wrapper);
       break;
     }

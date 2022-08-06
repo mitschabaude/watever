@@ -20,8 +20,18 @@
 
   (start $init)
 
+  ;; round up pointer values to multiples of 8, for efficient memory addressing of 64-bit values
+  (func $next_8_multiple (param $pointer i32) (result i32)
+    ;; (((pointer - 1) >> 3) << 3) + 8
+    local.get $pointer
+    (i32.const 1) (i32.sub)
+    (i32.const 3) i32.shr_u
+    (i32.const 3) i32.shl
+    (i32.const 8) i32.add
+  )
+
   (func $init
-    (global.set $alloc_start (global.get $data_end))
+    (global.set $alloc_start (call $next_8_multiple (global.get $data_end)))
     (global.set $alloc_offset (global.get $alloc_start))
   )
 
@@ -34,18 +44,20 @@
     (local $pointer i32)
     (local $allocpages i32)
 
-    ;; pointer = alloc_offset + 4
+    ;; pointer = alloc_offset + 8
     ;; memory[alloc_offset] = length
-    ;; alloc_offset = pointer + length
-    (local.set $pointer (i32.add (global.get $alloc_offset) (i32.const 4)))
+    ;; alloc_offset = next_8_multiple(pointer + length)
+    (local.set $pointer (i32.add (global.get $alloc_offset) (i32.const 8)))
     (i32.store (global.get $alloc_offset) (local.get $length))
     (global.set $alloc_offset
-      (i32.add (local.get $pointer) (local.get $length))
+      (call $next_8_multiple
+        (i32.add (local.get $pointer) (local.get $length))
+      )
     )
 
-    ;; if ((((alloc_offset + 4) >> 16) + 1) > memory.size) { memory.grow(...) }
+    ;; if ((((alloc_offset + 8) >> 16) + 1) > memory.size) { memory.grow(...) }
     global.get $alloc_offset
-    i32.const 4
+    i32.const 8
     i32.add
     i32.const 16
     i32.shr_u
@@ -64,7 +76,7 @@
   )
 
   (func $get_length (param $pointer i32) (result i32)
-    (i32.load (i32.sub (local.get $pointer) (i32.const 4)))
+    (i32.load (i32.sub (local.get $pointer) (i32.const 8)))
   )
 
   ;; set of locks is currently stored in JS for simplicity

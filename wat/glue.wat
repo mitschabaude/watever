@@ -125,7 +125,7 @@
     local.get $pointer
     local.get 0
     i32.store8
-    (i32.sub (local.get $pointer) (i32.const 4))
+    (i32.sub (local.get $pointer) (i32.const 8))
   )
 
   (func $store32
