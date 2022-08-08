@@ -25,10 +25,10 @@
     "test": "./bin/watever.js test/*.wat && node test/test.js"
   },
   "dependencies": {
-    "@webassemblyjs/ast": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-ast.tgz",
-    "@webassemblyjs/wasm-parser": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wasm-parser.tgz",
-    "@webassemblyjs/wast-parser": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wast-parser.tgz",
-    "@webassemblyjs/wast-printer": "https://github.com/mitschabaude/webassemblyjs/releases/latest/download/webassemblyjs-wast-printer.tgz",
+    "@webassemblyjs/ast": "../webassemblyjs/packages/ast",
+    "@webassemblyjs/wasm-parser": "../webassemblyjs/packages/wasm-parser",
+    "@webassemblyjs/wast-parser": "../webassemblyjs/packages/wast-parser",
+    "@webassemblyjs/wast-printer": "../webassemblyjs/packages/wast-printer",
     "fast-base64": "^0.1.8",
     "minimist": "^1.2.5",
     "parse-imports": "^1.1.0",
