@@ -14,7 +14,7 @@
   (export "keep" (func $keep))
   (export "free" (func $free))
 
-  (memory $memory 1)
+  (memory $memory 65536)
   (global $alloc_start (mut i32) (i32.const 0))
   (global $alloc_offset (mut i32) (i32.const 0))
 
